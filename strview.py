@@ -54,13 +54,64 @@ for (chromosome,begin,end,name,repeat,prefix,suffix) in configs:
 
 bamfile = pysam.AlignmentFile(in_bam)
 if args.verbose == 0:
-    print("read_name\tchromosome\tposition\tprefix_sequence\trepeat_sequence\tsuffix_sequence\n")
+    print("read_name\tchromosome\tposition\tprefix_sequence\trepeat_sequence\tsuffix_sequence")
     align_data_file.write("read_name\tchromosome\tposition\tprefix_sequence\trepeat_sequence\tsuffix_sequence\n")
 
     for alignment in bamfile:
-        print("%s\t%s\t%s\t%s\t%s\t%s\n" % (alignment.qname,alignment.seq,alignment.pos,prefix,repeat,suffix))
-        align_data_file.write("%s\t%s\t%s\t%s\t%s\t%s\n" % (alignment.qname,alignment.seq,alignment.pos,prefix,repeat,suffix))
+        chr_rname = []
+        if alignment.rname == 0:
+            chr_rname = "chr1"
+        if alignment.rname == 1:
+            chr_rname = "chr2"
+        if alignment.rname == 2:
+            chr_rname = "chr3"
+        if alignment.rname == 3:
+            chr_rname = "chr4"
+        if alignment.rname == 4:
+            chr_rname = "chr5"
+        if alignment.rname == 5:
+            chr_rname = "chr6"
+        if alignment.rname == 6:
+            chr_rname = "chr7"
+        if alignment.rname == 7:
+            chr_rname = "chr8"
+        if alignment.rname == 8:
+            chr_rname = "chr9"
+        if alignment.rname == 9:
+            chr_rname = "chr10"
+        if alignment.rname == 10:
+            chr_rname = "chr11"
+        if alignment.rname == 11:
+            chr_rname = "chr12"
+        if alignment.rname == 12:
+            chr_rname = "chr13"
+        if alignment.rname == 13:
+            chr_rname = "chr14"
+        if alignment.rname == 14:
+            chr_rname = "chr15"
+        if alignment.rname == 15:
+            chr_rname = "chr16"
+        if alignment.rname == 16:
+            chr_rname = "chr17"
+        if alignment.rname == 17:
+            chr_rname = "chr18"
+        if alignment.rname == 18:
+            chr_rname = "chr19"
+        if alignment.rname == 19:
+            chr_rname = "chr20"
+        if alignment.rname == 20:
+            chr_rname = "chr21"
+        if alignment.rname == 21:
+            chr_rname = "chr22"
+        if alignment.rname == 22:
+            chr_rname = "chrX"
+        print("%s\t%s\t%s\t%s\t%s\t%s\n" % (alignment.qname,chr_rname,alignment.pos,prefix,repeat,suffix))
+        print(alignment.rname)
+        align_data_file.write("%s\t%s\t%s\t%s\t%s\t%s\n" % (alignment.qname,chr_rname,alignment.pos,prefix,repeat,suffix))
         break
+
+#TODO::CONVERT SAM CIGAR TO ALIGNMENT
+
 
 #PARASAIL ALIGNMENT SEGMENT
 if args.verbose == 1:
