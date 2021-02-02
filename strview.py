@@ -5,6 +5,17 @@ import sys
 import pysam
 import argparse
 
+def find_read(read_file_name, read_from_cigar):
+    read_seq = []
+    for query_read in pysam.FastxFile(read_file_name):
+        #print("%s\t%s"%(query_read.name,read.qname))
+        if query_read.name == read_from_cigar: 
+            read_seq = query_read.sequence
+            #print(read_from_cigar)
+            #print(query_read.name)
+            return (read_seq,query_read.name)
+    return ('not found','not found')
+
 #parser = argparse.ArgumentParser(prog='strview', usage= 'python %(strview)s [options]',description='A small tool to elaborate upon alignments between the read and reference around the STR region',)
 #parser.add_argument('--bam',dest='bam_file', help='the bam file that contains the alignment of the read to the reference')
 #parser.add_argument('--ref',dest='ref_file', help='the reference file')
@@ -17,6 +28,8 @@ parser.add_argument('--read', help='the read file', required=False)
 parser.add_argument('--ref', help='the ref file', required=True)
 parser.add_argument('--config', help='the config file', required=True)
 parser.add_argument('--output', help='the config file', required=True)
+parser.add_argument('--parasail', help='Obtain the alignments using parasail. Must be used with the verbose flag', required=False, type=int, default=0)
+parser.add_argument('--pysam', help='Obtain the alignments from the BAM File. Must be used with the verbose flag', required=False, type=int, default=0)
 parser.add_argument('--verbose', help='display the alignments of the different regions', type=int, required=False, default=0)
 
 args = parser.parse_args()
@@ -105,16 +118,18 @@ if args.verbose == 0:
             chr_rname = "chr22"
         if alignment.rname == 22:
             chr_rname = "chrX"
-        print("%s\t%s\t%s\t%s\t%s\t%s\n" % (alignment.qname,chr_rname,alignment.pos,prefix,repeat,suffix))
-        print(alignment.rname)
-        align_data_file.write("%s\t%s\t%s\t%s\t%s\t%s\n" % (alignment.qname,chr_rname,alignment.pos,prefix,repeat,suffix))
-        break
+        if chr_rname == chromosome:
+            print("%s\t%s\t%s\t%s\t%s\t%s\n" % (alignment.qname,chr_rname,alignment.pos,prefix,repeat,suffix))
+            print(alignment.rname)
+            align_data_file.write("%s\t%s\t%s\t%s\t%s\t%s\n" % (alignment.qname,chr_rname,alignment.pos,prefix,repeat,suffix))
+        
 
 #TODO::CONVERT SAM CIGAR TO ALIGNMENT
 
+idx = 0
 
 #PARASAIL ALIGNMENT SEGMENT
-if args.verbose == 1:
+if args.verbose == 1 and args.parasail == 1 :
     scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
 
     chr9_seq = []
@@ -234,6 +249,50 @@ if args.verbose == 1:
         align_data_file.write("\n")
         align_data_file.write(result.traceback.ref)
         align_data_file.write("\n") 
+
+        print("\n\nProcessed %d bam reads"%(idx))
+        idx = idx + 1
+
+
+if args.verbose == 1 and args.pysam == 1 :
+    for read in pysam.FastxFile(control_file):
+        print(read.name)
+        if(read.name == chromosome):
+            chr9_seq = read.sequence
+            #print(len(chr9_seq))
+            local_seq = chr9_seq[27572000 : 27575000]
+            #print(local_seq)
+            #print(read.sequence)
+    
+    read_from_cigar = ""
+    reference_from_cigar = ""
+    expanded_cigar = ""
+    hit = 0
+    for read in bamfile:
+        pair_out = read.get_aligned_pairs(True)
+        tmp = find_read(reads_file,read.qname)
+        read_seq = tmp[0]
+        if tmp[1] != read.qname:
+            #print("%s\t%s"%(tmp[1],read.qname))
+            continue
+        for tmp_pair in pair_out:
+            #print(read_seq[tmp_pair[0]])
+            if tmp_pair[1] == 27573528:
+                hit = hit + 1
+            read_from_cigar = read_from_cigar + read_seq[tmp_pair[0]]
+            reference_from_cigar = reference_from_cigar + chr9_seq[tmp_pair[1]]
+            if tmp_pair[0] and tmp_pair[1]:
+                expanded_cigar = expanded_cigar + '|'
+            else:
+                expanded_cigar = expanded_cigar + ' '
+        print(reference_from_cigar)
+        print(expanded_cigar)
+        print(read_from_cigar)
+        if hit != 0 :
+            print('FOUND IT!!!!!!!!!!!!!!!!!!!!!')
+            hit = 0
+        print("\n\nProcessed %d bam reads"%(idx))
+        idx = idx + 1
 
 align_data_file.close()
 #print(read_seq)
