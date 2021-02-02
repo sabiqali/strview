@@ -69,8 +69,29 @@ bamfile = pysam.AlignmentFile(in_bam)
 if args.verbose == 0:
     print("read_name\tchromosome\tposition\tprefix_sequence\trepeat_sequence\tsuffix_sequence")
     align_data_file.write("read_name\tchromosome\tposition\tprefix_sequence\trepeat_sequence\tsuffix_sequence\n")
-
+    
     for alignment in bamfile:
+        aligned_prefix = ""
+        aligned_suffix = ""
+        aligned_repeat = ""
+        idx = 0
+        if alignment.pos > 27500000: #THIS IS A HEURISTIC NEEDS TO BE CHANGED TO BEGIN - A CERTAIN VALUE
+            #print(alignment.pos)
+            pair_out = alignment.get_aligned_pairs(True)
+            tmp = find_read(reads_file,alignment.qname)
+            read_seq = tmp[0]
+            if tmp[1] != alignment.qname:
+                #print("%s\t%s"%(tmp[1],alignment.qname))
+                #print("processed %d read"%(idx))
+                idx = idx + 1
+                continue
+            for tmp_pair in pair_out:
+                if tmp_pair[1] > (int(begin) - len(prefix)) and tmp_pair[1] < int(begin):
+                    aligned_prefix = aligned_prefix + read_seq[tmp_pair[0]]
+                if tmp_pair[1] > int(end) and tmp_pair[1] < (int(end) + len(suffix)):
+                    aligned_suffix = aligned_suffix + read_seq[tmp_pair[0]]
+                if tmp_pair[1] > int(begin) and tmp_pair[1] < int(end):
+                    aligned_repeat = aligned_repeat + read_seq[tmp_pair[0]]
         chr_rname = []
         if alignment.rname == 0:
             chr_rname = "chr1"
@@ -118,10 +139,10 @@ if args.verbose == 0:
             chr_rname = "chr22"
         if alignment.rname == 22:
             chr_rname = "chrX"
-        if chr_rname == chromosome:
-            print("%s\t%s\t%s\t%s\t%s\t%s\n" % (alignment.qname,chr_rname,alignment.pos,prefix,repeat,suffix))
-            print(alignment.rname)
-            align_data_file.write("%s\t%s\t%s\t%s\t%s\t%s\n" % (alignment.qname,chr_rname,alignment.pos,prefix,repeat,suffix))
+        if chr_rname == chromosome and aligned_prefix and aligned_repeat and aligned_suffix:
+            print("%s\t%s\t%s\t%s\t%s\t%s\n" % (alignment.qname,chr_rname,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
+            #print(alignment.rname)
+            align_data_file.write("%s\t%s\t%s\t%s\t%s\t%s\n" % (alignment.qname,chr_rname,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
         
 
 #TODO::CONVERT SAM CIGAR TO ALIGNMENT
