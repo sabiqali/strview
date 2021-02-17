@@ -17,9 +17,12 @@ def find_read(read_file_name, read_from_cigar):
             return (read_seq,query_read.name)
     return ('not found','not found')
 
-def round_up(n, decimals=0):
-    multiplier = 10 ** decimals
-    return int(math.ceil(n * multiplier) / multiplier)
+#def round_up(n, decimals=0):
+#    multiplier = 10 ** decimals
+#    return int(math.ceil(n * multiplier) / multiplier)
+
+def roundup(x):
+    return int(math.ceil(x / 100000.0)) * 100000
 
 #parser = argparse.ArgumentParser(prog='strview', usage= 'python %(strview)s [options]',description='A small tool to elaborate upon alignments between the read and reference around the STR region',)
 #parser.add_argument('--bam',dest='bam_file', help='the bam file that contains the alignment of the read to the reference')
@@ -98,10 +101,10 @@ for alignment in bamfile:
     count = 0 
     idx = 0
     chr_rname = bamfile.get_reference_name(alignment.reference_id)
-    upper_limit = round_up(int(begin),-4)
-    lower_limit = upper_limit - 10000
+    upper_limit = roundup(int(begin))
+    lower_limit = upper_limit - 100000
     #print("%d %d"%(upper_limit,lower_limit))
-    if alignment.pos > 27500000 and alignment.pos < 27600000: #THIS IS A HEURISTIC NEEDS TO BE CHANGED TO BEGIN - A CERTAIN VALUE
+    if alignment.pos > lower_limit and alignment.pos < upper_limit: #THIS IS A HEURISTIC NEEDS TO BE CHANGED TO BEGIN - A CERTAIN VALUE
         #print(alignment.pos)
         pair_out_identity = alignment.get_aligned_pairs()
 
