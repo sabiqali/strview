@@ -87,8 +87,10 @@ bamfile = pysam.AlignmentFile(in_bam)
 if args.verbose == 0:
     print("read_name\tchromosome\tcount\tposition\tprefix_sequence\trepeat_sequence\tsuffix_sequence")
     align_data_file.write("read_name\tchromosome\tcount\tposition\tprefix_sequence\trepeat_sequence\tsuffix_sequence\n")
-    
-for alignment in bamfile:
+
+upper_limit = roundup(int(begin))
+lower_limit = upper_limit - 100000    
+for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
     aligned_prefix = ""
     aligned_ref_prefix = ""
     prefix_cigar = ""
@@ -100,85 +102,32 @@ for alignment in bamfile:
     repeat_cigar = ""
     count = 0 
     idx = 0
-    chr_rname = bamfile.get_reference_name(alignment.reference_id)
-    upper_limit = roundup(int(begin))
-    lower_limit = upper_limit - 100000
-    #print("%d %d"%(upper_limit,lower_limit))
-    if alignment.pos > lower_limit and alignment.pos < upper_limit: #THIS IS A HEURISTIC NEEDS TO BE CHANGED TO BEGIN - A CERTAIN VALUE
-        #print(alignment.pos)
-        pair_out_identity = alignment.get_aligned_pairs()
+    pair_out_identity = alignment.get_aligned_pairs()
 
-        pair_out = alignment.get_aligned_pairs(True)
-        
-        tmp = alignment.query_sequence
-        read_seq = tmp
-        
-        for tmp_pair in pair_out:                                                         #reconstruct the aligned segments from the cigar
-            if tmp_pair[1] > (int(begin) - len(prefix)) and tmp_pair[1] < int(begin):
-                aligned_prefix = aligned_prefix + read_seq[tmp_pair[0]]
-                aligned_ref_prefix = aligned_ref_prefix + ref_seq[tmp_pair[1]]
-                prefix_cigar = prefix_cigar + "|"
-            if tmp_pair[1] > int(end) and tmp_pair[1] < (int(end) + len(suffix)):
-                aligned_suffix = aligned_suffix + read_seq[tmp_pair[0]]
-                aligned_ref_suffix = aligned_ref_suffix + ref_seq[tmp_pair[1]]
-                suffix_cigar = suffix_cigar + "|"
-            if tmp_pair[1] > int(begin) and tmp_pair[1] < int(end):
-                aligned_repeat = aligned_repeat + read_seq[tmp_pair[0]]
-                aligned_ref_repeat = aligned_ref_repeat + ref_seq[tmp_pair[1]]
-                repeat_cigar = repeat_cigar + "|"
-                count = aligned_repeat.count("GGCCCC")
-    #chr_rname = []
-    #if alignment.rname == 0:
-    #    chr_rname = "chr1"
-    #if alignment.rname == 1:
-    #    chr_rname = "chr2"
-    #if alignment.rname == 2:
-    #    chr_rname = "chr3"
-    #if alignment.rname == 3:
-    #    chr_rname = "chr4"
-    #if alignment.rname == 4:
-    #    chr_rname = "chr5"
-    #if alignment.rname == 5:
-    #    chr_rname = "chr6"
-    #if alignment.rname == 6:
-    #    chr_rname = "chr7"
-    #if alignment.rname == 7:
-    #    chr_rname = "chr8"
-    #if alignment.rname == 8:
-    #    chr_rname = "chr9"
-    #if alignment.rname == 9:
-    #    chr_rname = "chr10"
-    #if alignment.rname == 10:
-    #    chr_rname = "chr11"
-    #if alignment.rname == 11:
-    #    chr_rname = "chr12"
-    #if alignment.rname == 12:
-    #    chr_rname = "chr13"
-    #if alignment.rname == 13:
-    #    chr_rname = "chr14"
-    #if alignment.rname == 14:
-    #    chr_rname = "chr15"
-    #if alignment.rname == 15:
-    #    chr_rname = "chr16"
-    #if alignment.rname == 16:
-    #    chr_rname = "chr17"
-    #if alignment.rname == 17:
-    #    chr_rname = "chr18"
-    #if alignment.rname == 18:
-    #    chr_rname = "chr19"
-    #if alignment.rname == 19:
-    #    chr_rname = "chr20"
-    #if alignment.rname == 20:
-    #    chr_rname = "chr21"
-    #if alignment.rname == 21:
-    #    chr_rname = "chr22"
-    #if alignment.rname == 22:
-    #    chr_rname = "chrX"
-    if chr_rname == chromosome and aligned_prefix and aligned_repeat and aligned_suffix and args.verbose == 0:
-        print("%s\t%s\t%d\t%s\t%s\t%s\t%s\n" % (alignment.qname,chr_rname,count,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
+    pair_out = alignment.get_aligned_pairs(True)
+    
+    tmp = alignment.query_sequence
+    read_seq = tmp
+    
+    for tmp_pair in pair_out:                                                         #reconstruct the aligned segments from the cigar
+        if tmp_pair[1] > (int(begin) - len(prefix)) and tmp_pair[1] < int(begin):
+            aligned_prefix = aligned_prefix + read_seq[tmp_pair[0]]
+            aligned_ref_prefix = aligned_ref_prefix + ref_seq[tmp_pair[1]]
+            prefix_cigar = prefix_cigar + "|"
+        if tmp_pair[1] > int(end) and tmp_pair[1] < (int(end) + len(suffix)):
+            aligned_suffix = aligned_suffix + read_seq[tmp_pair[0]]
+            aligned_ref_suffix = aligned_ref_suffix + ref_seq[tmp_pair[1]]
+            suffix_cigar = suffix_cigar + "|"
+        if tmp_pair[1] > int(begin) and tmp_pair[1] < int(end):
+            aligned_repeat = aligned_repeat + read_seq[tmp_pair[0]]
+            aligned_ref_repeat = aligned_ref_repeat + ref_seq[tmp_pair[1]]
+            repeat_cigar = repeat_cigar + "|"
+            count = aligned_repeat.count("GGCCCC")
+    if aligned_prefix and aligned_repeat and aligned_suffix and args.verbose == 0:
+        print("%s\t%s\t%d\t%s\t%s\t%s\t%s\n" % (alignment.qname,chromosome,count,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
         #print(alignment.rname)
-        align_data_file.write("%s\t%s\t%s\t%s\t%s\t%s\n" % (alignment.qname,chr_rname,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
-    if chr_rname == chromosome and aligned_prefix and aligned_repeat and aligned_suffix and args.verbose == 1 and args.pysam == 1:
+        align_data_file.write("%s\t%s\t%s\t%s\t%s\t%s\n" % (alignment.qname,chromosome,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
+    if aligned_prefix and aligned_repeat and aligned_suffix and args.verbose == 1 and args.pysam == 1:
         print(aligned_ref_prefix)
         print(prefix_cigar)
         print(aligned_prefix)
