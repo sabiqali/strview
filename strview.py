@@ -61,14 +61,14 @@ for (chromosome,begin,end,name,repeat,prefix,suffix) in configs:
     print(chromosome)
     break
 
-chr9_seq = []
+ref_seq = []
 local_seq = []
 for read in pysam.FastxFile(control_file):
     print(read.name)
     if(read.name == chromosome):
-        chr9_seq = read.sequence
-        #print(len(chr9_seq))
-        local_seq = chr9_seq[27572000 : 27575000]
+        ref_seq = read.sequence
+        #print(len(ref_seq))
+        #local_seq = ref_seq[27572000 : 27575000]
         #print(local_seq)
         #print(read.sequence)
 
@@ -109,25 +109,22 @@ for alignment in bamfile:
         pair_out_identity = alignment.get_aligned_pairs()
 
         pair_out = alignment.get_aligned_pairs(True)
-        tmp = find_read(reads_file,alignment.qname)
-        read_seq = tmp[0]
-        if tmp[1] != alignment.qname:
-            #print("%s\t%s"%(tmp[1],alignment.qname))
-            #print("processed %d read"%(idx))
-            idx = idx + 1
-            continue
-        for tmp_pair in pair_out:
+        
+        tmp = alignment.query_sequence
+        read_seq = tmp
+        
+        for tmp_pair in pair_out:                                                         #reconstruct the aligned segments from the cigar
             if tmp_pair[1] > (int(begin) - len(prefix)) and tmp_pair[1] < int(begin):
                 aligned_prefix = aligned_prefix + read_seq[tmp_pair[0]]
-                aligned_ref_prefix = aligned_ref_prefix + chr9_seq[tmp_pair[1]]
+                aligned_ref_prefix = aligned_ref_prefix + ref_seq[tmp_pair[1]]
                 prefix_cigar = prefix_cigar + "|"
             if tmp_pair[1] > int(end) and tmp_pair[1] < (int(end) + len(suffix)):
                 aligned_suffix = aligned_suffix + read_seq[tmp_pair[0]]
-                aligned_ref_suffix = aligned_ref_suffix + chr9_seq[tmp_pair[1]]
+                aligned_ref_suffix = aligned_ref_suffix + ref_seq[tmp_pair[1]]
                 suffix_cigar = suffix_cigar + "|"
             if tmp_pair[1] > int(begin) and tmp_pair[1] < int(end):
                 aligned_repeat = aligned_repeat + read_seq[tmp_pair[0]]
-                aligned_ref_repeat = aligned_ref_repeat + chr9_seq[tmp_pair[1]]
+                aligned_ref_repeat = aligned_ref_repeat + ref_seq[tmp_pair[1]]
                 repeat_cigar = repeat_cigar + "|"
                 count = aligned_repeat.count("GGCCCC")
     #chr_rname = []
@@ -329,7 +326,7 @@ if args.verbose == 1 and args.parasail == 1 :
 #            if tmp_pair[1] == 27573528:
 #                hit = hit + 1
 #            read_from_cigar = read_from_cigar + read_seq[tmp_pair[0]]
-#            reference_from_cigar = reference_from_cigar + chr9_seq[tmp_pair[1]]
+#            reference_from_cigar = reference_from_cigar + ref_seq[tmp_pair[1]]
 #            if tmp_pair[0] and tmp_pair[1]:
 #                expanded_cigar = expanded_cigar + '|'
 #            else:
