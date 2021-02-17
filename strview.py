@@ -4,6 +4,7 @@ import parasail
 import sys
 import pysam
 import argparse
+import math
 
 def find_read(read_file_name, read_from_cigar):
     read_seq = []
@@ -15,6 +16,10 @@ def find_read(read_file_name, read_from_cigar):
             #print(query_read.name)
             return (read_seq,query_read.name)
     return ('not found','not found')
+
+def round_up(n, decimals=0):
+    multiplier = 10 ** decimals
+    return int(math.ceil(n * multiplier) / multiplier)
 
 #parser = argparse.ArgumentParser(prog='strview', usage= 'python %(strview)s [options]',description='A small tool to elaborate upon alignments between the read and reference around the STR region',)
 #parser.add_argument('--bam',dest='bam_file', help='the bam file that contains the alignment of the read to the reference')
@@ -92,6 +97,10 @@ for alignment in bamfile:
     repeat_cigar = ""
     count = 0 
     idx = 0
+    chr_rname = bamfile.get_reference_name(alignment.reference_id)
+    upper_limit = round_up(int(begin),-4)
+    lower_limit = upper_limit - 10000
+    #print("%d %d"%(upper_limit,lower_limit))
     if alignment.pos > 27500000 and alignment.pos < 27600000: #THIS IS A HEURISTIC NEEDS TO BE CHANGED TO BEGIN - A CERTAIN VALUE
         #print(alignment.pos)
         pair_out_identity = alignment.get_aligned_pairs()
@@ -118,53 +127,53 @@ for alignment in bamfile:
                 aligned_ref_repeat = aligned_ref_repeat + chr9_seq[tmp_pair[1]]
                 repeat_cigar = repeat_cigar + "|"
                 count = aligned_repeat.count("GGCCCC")
-    chr_rname = []
-    if alignment.rname == 0:
-        chr_rname = "chr1"
-    if alignment.rname == 1:
-        chr_rname = "chr2"
-    if alignment.rname == 2:
-        chr_rname = "chr3"
-    if alignment.rname == 3:
-        chr_rname = "chr4"
-    if alignment.rname == 4:
-        chr_rname = "chr5"
-    if alignment.rname == 5:
-        chr_rname = "chr6"
-    if alignment.rname == 6:
-        chr_rname = "chr7"
-    if alignment.rname == 7:
-        chr_rname = "chr8"
-    if alignment.rname == 8:
-        chr_rname = "chr9"
-    if alignment.rname == 9:
-        chr_rname = "chr10"
-    if alignment.rname == 10:
-        chr_rname = "chr11"
-    if alignment.rname == 11:
-        chr_rname = "chr12"
-    if alignment.rname == 12:
-        chr_rname = "chr13"
-    if alignment.rname == 13:
-        chr_rname = "chr14"
-    if alignment.rname == 14:
-        chr_rname = "chr15"
-    if alignment.rname == 15:
-        chr_rname = "chr16"
-    if alignment.rname == 16:
-        chr_rname = "chr17"
-    if alignment.rname == 17:
-        chr_rname = "chr18"
-    if alignment.rname == 18:
-        chr_rname = "chr19"
-    if alignment.rname == 19:
-        chr_rname = "chr20"
-    if alignment.rname == 20:
-        chr_rname = "chr21"
-    if alignment.rname == 21:
-        chr_rname = "chr22"
-    if alignment.rname == 22:
-        chr_rname = "chrX"
+    #chr_rname = []
+    #if alignment.rname == 0:
+    #    chr_rname = "chr1"
+    #if alignment.rname == 1:
+    #    chr_rname = "chr2"
+    #if alignment.rname == 2:
+    #    chr_rname = "chr3"
+    #if alignment.rname == 3:
+    #    chr_rname = "chr4"
+    #if alignment.rname == 4:
+    #    chr_rname = "chr5"
+    #if alignment.rname == 5:
+    #    chr_rname = "chr6"
+    #if alignment.rname == 6:
+    #    chr_rname = "chr7"
+    #if alignment.rname == 7:
+    #    chr_rname = "chr8"
+    #if alignment.rname == 8:
+    #    chr_rname = "chr9"
+    #if alignment.rname == 9:
+    #    chr_rname = "chr10"
+    #if alignment.rname == 10:
+    #    chr_rname = "chr11"
+    #if alignment.rname == 11:
+    #    chr_rname = "chr12"
+    #if alignment.rname == 12:
+    #    chr_rname = "chr13"
+    #if alignment.rname == 13:
+    #    chr_rname = "chr14"
+    #if alignment.rname == 14:
+    #    chr_rname = "chr15"
+    #if alignment.rname == 15:
+    #    chr_rname = "chr16"
+    #if alignment.rname == 16:
+    #    chr_rname = "chr17"
+    #if alignment.rname == 17:
+    #    chr_rname = "chr18"
+    #if alignment.rname == 18:
+    #    chr_rname = "chr19"
+    #if alignment.rname == 19:
+    #    chr_rname = "chr20"
+    #if alignment.rname == 20:
+    #    chr_rname = "chr21"
+    #if alignment.rname == 21:
+    #    chr_rname = "chr22"
+    #if alignment.rname == 22:
+    #    chr_rname = "chrX"
     if chr_rname == chromosome and aligned_prefix and aligned_repeat and aligned_suffix and args.verbose == 0:
         print("%s\t%s\t%d\t%s\t%s\t%s\t%s\n" % (alignment.qname,chr_rname,count,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
         #print(alignment.rname)
