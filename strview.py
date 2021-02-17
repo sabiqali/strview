@@ -122,7 +122,7 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
             aligned_repeat = aligned_repeat + read_seq[tmp_pair[0]]
             aligned_ref_repeat = aligned_ref_repeat + ref_seq[tmp_pair[1]]
             repeat_cigar = repeat_cigar + "|"
-            count = aligned_repeat.count("GGCCCC")
+            count = aligned_repeat.count(repeat)
     if aligned_prefix and aligned_repeat and aligned_suffix and args.verbose == 0:
         print("%s\t%s\t%d\t%s\t%s\t%s\t%s\n" % (alignment.qname,chromosome,count,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
         #print(alignment.rname)
