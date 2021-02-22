@@ -29,7 +29,7 @@ right_flank = DNA(length)
 RE = repeat_expansion(repeat,count)
 sequence_name = "Synthetic_Sequence"
 
-config_file.write("%s\t%d\t%d\t%s\t%s\t%s\t%s"%(sequence_name,length,(length+150),"synthetic",repeat,left_flank[length-150:],right_flank[:150]))
+config_file.write("%s\t%d\t%d\t%s\t%s\t%s\t%s"%(sequence_name,length,(length+(len(repeat)*count)),"synthetic",repeat,left_flank[length-150:],right_flank[:150]))
 
 print(">%s"%(sequence_name))
 print (left_flank+RE+right_flank)
