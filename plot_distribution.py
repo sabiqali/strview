@@ -19,9 +19,9 @@ count_list=[]
 c = 0
 d = 0
 for line in outputs:
-    count_list.append(line[2])
+    count_list.append(int(line[2]))
 
-count_list.sort()
+count_list.sort(reverse=True)
 #n, bins, patches = plt.hist(count_list)
 n, bins, patches = plt.hist(count_list, bins='auto')
 plt.xlabel('count')

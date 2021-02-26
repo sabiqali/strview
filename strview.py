@@ -90,6 +90,7 @@ if args.verbose == 0:
 
 upper_limit = roundup(int(begin))
 lower_limit = upper_limit - 100000    
+idx = 0
 for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
     aligned_prefix = ""
     aligned_ref_prefix = ""
@@ -101,14 +102,65 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
     aligned_repeat = ""
     repeat_cigar = ""
     count = 0 
-    idx = 0
     pair_out_identity = alignment.get_aligned_pairs()
 
     pair_out = alignment.get_aligned_pairs(True)
     
     tmp = alignment.query_sequence
     read_seq = tmp
+
+    tmp_num = 0
+    tmp_repeat_low = 0
+    tmp_repeat_upper = 0
+    for tmp_pairs in  pair_out:
+        if tmp_pairs[1] == int(begin) - 1:
+            tmp_num = tmp_pairs[0]
+            tmp_repeat_low = tmp_num + 1
+        if tmp_pairs[1] == int(begin) - 2:
+            tmp_num = tmp_pairs[0]
+            tmp_repeat_low = tmp_num + 2
+        if tmp_pairs[1] == int(begin) - 3:
+            tmp_num = tmp_pairs[0]
+            tmp_repeat_low = tmp_num + 3
+        if tmp_pairs[1] == int(begin) - 4:
+            tmp_num = tmp_pairs[0]
+            tmp_repeat_low = tmp_num + 4
+        if tmp_pairs[1] == int(begin) - 5:
+            tmp_num = tmp_pairs[0]
+            tmp_repeat_low = tmp_num + 5
+        if tmp_pairs[1] == int(begin) - 6:
+            tmp_num = tmp_pairs[0]
+            tmp_repeat_low = tmp_num + 6
+        if tmp_pairs[1] == int(begin) - 7:
+            tmp_num = tmp_pairs[0]
+            tmp_repeat_low = tmp_num + 7
+
+        if tmp_pairs[1] == int(end) + 1:
+            tmp_num = tmp_pairs[0]
+            tmp_repeat_upper = tmp_num - 1
+        if tmp_pairs[1] == int(end) + 2:
+            tmp_num = tmp_pairs[0]
+            tmp_repeat_upper = tmp_num - 2
+        if tmp_pairs[1] == int(end) + 3:
+            tmp_num = tmp_pairs[0]
+            tmp_repeat_upper = tmp_num - 3
+        if tmp_pairs[1] == int(end) + 4:
+            tmp_num = tmp_pairs[0]
+            tmp_repeat_upper = tmp_num - 4
+        if tmp_pairs[1] == int(end) + 5:
+            tmp_num = tmp_pairs[0]
+            tmp_repeat_upper = tmp_num - 5
+        if tmp_pairs[1] == int(end) + 6:
+            tmp_num = tmp_pairs[0]
+            tmp_repeat_upper = tmp_num - 6
+        if tmp_pairs[1] == int(end) + 7:
+            tmp_num = tmp_pairs[0]
+            tmp_repeat_upper = tmp_num - 7
     
+    idx = idx + 1
+    #print(idx)
+    tmp_count = int(len(read_seq[tmp_repeat_low:tmp_repeat_upper]) / len(repeat))
+
     for tmp_pair in pair_out:                                                         #reconstruct the aligned segments from the cigar
         if tmp_pair[1] > (int(begin) - len(prefix)) and tmp_pair[1] < int(begin):
             aligned_prefix = aligned_prefix + read_seq[tmp_pair[0]]
@@ -123,10 +175,10 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
             aligned_ref_repeat = aligned_ref_repeat + ref_seq[tmp_pair[1]]
             repeat_cigar = repeat_cigar + "|"
             count = aligned_repeat.count(repeat)
-    if aligned_prefix and aligned_repeat and aligned_suffix and args.verbose == 0:
-        print("%s\t%s\t%d\t%s\t%s\t%s\t%s\n" % (alignment.qname,chromosome,count,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
+    if aligned_prefix and aligned_repeat and aligned_suffix and args.verbose == 0 and tmp_count != 0:
+        print("%s\t%s\t%d\t%s\t%s\t%s\t%s\n" % (alignment.qname,chromosome,tmp_count,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
         #print(alignment.rname)
-        align_data_file.write("%s\t%s\t%s\t%s\t%s\t%s\n" % (alignment.qname,chromosome,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
+        align_data_file.write("%s\t%s\t%d\t%s\t%s\t%s\t%s\n" % (alignment.qname,chromosome,tmp_count,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
     if aligned_prefix and aligned_repeat and aligned_suffix and args.verbose == 1 and args.pysam == 1:
         print(aligned_ref_prefix)
         print(prefix_cigar)
