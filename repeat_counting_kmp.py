@@ -65,30 +65,50 @@ pat = "ATG"
 
 control_file = sys.argv[1]
 for read in pysam.FastxFile(control_file):
-    #print(read.name)
-    if(read.name == "chr9"):
-        chr9_seq = read.sequence
+	print("Chromosome: %s"%(read.name))
+	seq = read.sequence
+	locations = KMPSearch(pat, seq) 
+	
+	init = 0
+	count = 1
+	start = 0
+	for pos in locations:
+		if pos - init == len(pat):
+			if count == 1:
+				start = pos
+			count = count + 1
+			init = pos
+		else:
+			if count >= 10: 
+				print("Found %d %s consecutively from position %d in %s"%(count,pat,start,read.name))
+			count = 1 
+			init = pos
+			start = pos
+	
+	break
+    #if(read.name == "chr9"):
+    #    chr9_seq = read.sequence
         #print(len(chr9_seq))
-        local_seq = chr9_seq[27570000 : 27580000]
+    #    local_seq = chr9_seq[27570000 : 27580000]
         #print(local_seq)
         #print(read.sequence)
-		
-locations = KMPSearch(pat, chr9_seq) 
 
-print(locations)
-init = 0
-count = 1
-start = 0
-for pos in locations:
-	if pos - init == len(pat):
-		if count == 1:
-			start = pos
-		count = count + 1
-		init = pos
-	else:
-		if count >= 3: 
-			print("Found %d %s consecutively from position %d"%(count,pat,start))
-		count = 1 
-		init = pos
-		start = pos
+#locations = KMPSearch(pat, chr9_seq) 
+
+#print(locations)
+#init = 0
+#count = 1
+#start = 0
+#for pos in locations:
+#	if pos - init == len(pat):
+#		if count == 1:
+#			start = pos
+#		count = count + 1
+#		init = pos
+#	else:
+#		if count >= 10: 
+#			print("Found %d %s consecutively from position %d"%(count,pat,start))
+#		count = 1 
+#		init = pos
+#		start = pos
 
