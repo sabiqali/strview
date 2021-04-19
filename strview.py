@@ -24,6 +24,17 @@ def find_read(read_file_name, read_from_cigar):
 def roundup(x):
     return int(math.ceil(x / 100000.0)) * 100000
 
+def percentage_identity(cigar_exp):
+    m = 0
+    nm = 0
+    for chr in cigar_exp:
+        if chr == '|':
+            m = m + 1
+        else:
+            nm = nm + 1
+    pi = float(m/(nm + m))
+    return pi
+
 #parser = argparse.ArgumentParser(prog='strview', usage= 'python %(strview)s [options]',description='A small tool to elaborate upon alignments between the read and reference around the STR region',)
 #parser.add_argument('--bam',dest='bam_file', help='the bam file that contains the alignment of the read to the reference')
 #parser.add_argument('--ref',dest='ref_file', help='the reference file')
@@ -196,115 +207,31 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
 idx = 0
 
 #PARASAIL ALIGNMENT SEGMENT
-if args.verbose == 1 and args.parasail == 1 :
+if args.parasail == 1 :
     scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
-
-    read_seq = []
 
     align_data_file = open('alignment_data.txt','w')
 
-    for read in pysam.FastxFile(reads_file):
-        read_seq = read.sequence
-        #break
+    for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
+        read_seq = alignment.query_sequence
 
-        #align prefix to read
+        result_pre_traceback = parasail.sw_trace_scan_32(read_seq, prefix, 5, 4, scoring_matrix)
+        result_pre = parasail.ssw(read_seq, prefix, 5, 4, scoring_matrix)
 
-        result = parasail.sw_trace_scan_32(local_seq, prefix, 5, 4, scoring_matrix)
+        print("Score: %d " % (result_pre_traceback.score))
+        print(alignment.qname)
+        print(result_pre.ref_begin1)
+        print(result_pre.ref_end1)
+        print(percentage_identity(result_pre_traceback.traceback.comp))
 
-        print("Score: %d " % (result.score))
-        print(read.name)
-        print(result.traceback.query)
-        print(result.traceback.comp)
-        print(result.traceback.ref)
+        result_suf_traceback = parasail.sw_trace_scan_32(read_seq, suffix, 5, 4, scoring_matrix)
+        result_suf = parasail.ssw(read_seq, suffix, 5, 4, scoring_matrix)
 
-        result = parasail.sw_trace_scan_32(read_seq, prefix, 5, 4, scoring_matrix)
-
-        print("Score: %d " % (result.score))
-        print(read.name)
-        print(result.traceback.query)
-        print(result.traceback.comp)
-        print(result.traceback.ref)
-
-        align_data_file.write("Read Name: %s \n" % (read.name))
-        align_data_file.write("Prefix Score: %d \n" % (result.score))
-        align_data_file.write(result.traceback.query)
-        align_data_file.write("\n")
-        align_data_file.write(result.traceback.comp)
-        align_data_file.write("\n")
-        align_data_file.write(result.traceback.ref)
-        align_data_file.write("\n") 
-
-        #align suffix to read
-
-        result = parasail.sw_trace_scan_32(local_seq, suffix, 5, 4, scoring_matrix)
-
-        print("Score: %d " % (result.score))
-        print(read.name)
-        print(result.traceback.query)
-        print(result.traceback.comp)
-        print(result.traceback.ref)
-
-        result = parasail.sw_trace_scan_32(read_seq, suffix, 5, 4, scoring_matrix)
-
-        print("Score: %d " % (result.score))
-        print(read.name)
-        print(result.traceback.query)
-        print(result.traceback.comp)
-        print(result.traceback.ref)
-
-        align_data_file.write("Read Name: %s \n" % (read.name))
-        align_data_file.write("Suffix Score: %d \n" % (result.score))
-        align_data_file.write(result.traceback.query)
-        align_data_file.write("\n")
-        align_data_file.write(result.traceback.comp)
-        align_data_file.write("\n")
-        align_data_file.write(result.traceback.ref)
-        align_data_file.write("\n") 
-
-        #align repeat to read
-
-        result = parasail.sw_trace_scan_32(local_seq, repeat, 5, 4, scoring_matrix)
-
-        print("Score: %d " % (result.score))
-        print(read.name)
-        print(result.traceback.query)
-        print(result.traceback.comp)
-        print(result.traceback.ref)
-
-        result = parasail.sw_trace_scan_32(read_seq, repeat, 5, 4, scoring_matrix)
-
-        print("Score: %d " % (result.score))
-        print(read.name)
-        print(result.traceback.query)
-        print(result.traceback.comp)
-        print(result.traceback.ref)
-
-        #align the final analysis to the read
-        total_analysis = prefix+repeat+repeat+repeat+suffix
-
-        result = parasail.sw_trace_scan_32(local_seq, total_analysis, 5, 4, scoring_matrix)
-
-        print("Score: %d " % (result.score))
-        print(read.name)
-        print(result.traceback.query)
-        print(result.traceback.comp)
-        print(result.traceback.ref)
-
-        result = parasail.sw_trace_scan_32(read_seq, total_analysis, 5, 4, scoring_matrix)
-
-        print("Score: %d " % (result.score))
-        print(read.name)
-        print(result.traceback.query)
-        print(result.traceback.comp)
-        print(result.traceback.ref)
-        align_data_file.write("Read Name: %s \n" % (read.name))
-        align_data_file.write("Score: %d \n" % (result.score))
-        align_data_file.write(result.traceback.query)
-        align_data_file.write("\n")
-        align_data_file.write(result.traceback.comp)
-        align_data_file.write("\n")
-        align_data_file.write(result.traceback.ref)
-        align_data_file.write("\n") 
+        print("Score: %d " % (result_suf_traceback.score))
+        print(alignment.qname)
+        print(result_suf.ref_begin1)
+        print(result_suf.ref_end1)
+        print(percentage_identity(result_suf_traceback.traceback.comp))
 
         print("\n\nProcessed %d bam reads"%(idx))
         idx = idx + 1
