@@ -239,7 +239,7 @@ if args.parasail == 1 :
         if result_pre.ref_end1 < result_suf.ref_begin1:
             count = len(read_seq[result_pre.ref_end1+1:result_suf.ref_begin1-1]) / len(repeat)
             aligned_repeat = read_seq[result_pre.ref_end1+1:result_suf.ref_begin1-1]
-        else 
+        else: 
             count = 0
             aligned_repeat = ""
 
