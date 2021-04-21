@@ -221,20 +221,20 @@ if args.parasail == 1 :
         result_pre_traceback = parasail.sw_trace_scan_32(read_seq, prefix, 5, 4, scoring_matrix)
         result_pre = parasail.ssw(read_seq, prefix, 5, 4, scoring_matrix)
 
-        print("Score: %d " % (result_pre_traceback.score))
-        print(alignment.qname)
-        print(result_pre.ref_begin1)
-        print(result_pre.ref_end1)
-        print(percentage_identity(result_pre_traceback.traceback.comp))
+        #print("Score: %d " % (result_pre_traceback.score))
+        #print(alignment.qname)
+        #print(result_pre.ref_begin1)
+        #print(result_pre.ref_end1)
+        #print(percentage_identity(result_pre_traceback.traceback.comp))
 
         result_suf_traceback = parasail.sw_trace_scan_32(read_seq, suffix, 5, 4, scoring_matrix)
         result_suf = parasail.ssw(read_seq, suffix, 5, 4, scoring_matrix)
 
-        print("Score: %d " % (result_suf_traceback.score))
-        print(alignment.qname)
-        print(result_suf.ref_begin1)
-        print(result_suf.ref_end1)
-        print(percentage_identity(result_suf_traceback.traceback.comp))
+        #print("Score: %d " % (result_suf_traceback.score))
+        #print(alignment.qname)
+        #print(result_suf.ref_begin1)
+        #print(result_suf.ref_end1)
+        #print(percentage_identity(result_suf_traceback.traceback.comp))
 
         if result_pre.ref_end1 < result_suf.ref_begin1:
             count = len(read_seq[result_pre.ref_end1+1:result_suf.ref_begin1-1]) / len(repeat)
@@ -245,7 +245,7 @@ if args.parasail == 1 :
 
         print("%s\t%s\t%d\t%s\t%s\t%s\t%s\n" % (alignment.qname,chromosome,count,alignment.pos,result_pre_traceback.traceback.query,aligned_repeat,result_suf_traceback.traceback.query))
 
-        print("\n\nProcessed %d bam reads"%(idx))
+        #print("\n\nProcessed %d bam reads"%(idx))
         idx = idx + 1
 
 
