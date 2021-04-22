@@ -200,20 +200,24 @@ if args.pysam == 1:
             prev_score = 0 
             ref_seq = prefix + repeat + suffix
             result = parasail.sw_trace_scan_32(read_seq, ref_seq, 5, 4, scoring_matrix)
+            prev_result_ref = result.traceback.ref
+            result_ref = result.traceback.ref
             score = result.score
             c = 1
             while score > prev_score:
                 c = c + 1
                 prev_score = score
+                prev_result_ref = result_ref
                 ref_seq = prefix + ( repeat * c ) + suffix
                 result = parasail.sw_trace_scan_32(read_seq, ref_seq, 5, 4, scoring_matrix)
                 score = result.score
+                result_ref = result.traceback.ref
             max_score = prev_score
             alt_count = c - 1
 
         if aligned_prefix and aligned_repeat and aligned_suffix and args.verbose == 0 and tmp_count != 0:
             if args.score == 1:
-                print("%s\t%s\t%d\t%d\t%s\t%s\t%s\t%s\n" % (alignment.qname,chromosome,tmp_count,alt_count,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
+                print("%s\t%s\t%d\t%d\t%s\t%s\t%s\t%s\t%s\n" % (alignment.qname,chromosome,tmp_count,alt_count,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix,prev_result_ref))
                 #print(alignment.rname)
                 align_data_file.write("%s\t%s\t%d\t%d\t%s\t%s\t%s\t%s\n" % (alignment.qname,chromosome,tmp_count,alt_count,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
             else:
