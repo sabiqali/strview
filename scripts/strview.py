@@ -107,6 +107,7 @@ if args.verbose == 0:
 upper_limit = roundup(int(begin))
 lower_limit = upper_limit - 100000    
 idx = 0
+scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
 if args.pysam == 1:
     for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
         aligned_prefix = ""
@@ -256,7 +257,7 @@ idx = 0
 
 #PARASAIL ALIGNMENT SEGMENT
 if args.parasail == 1 :
-    scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
+    #scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
 
     align_data_file = open('alignment_data.txt','w')
 
