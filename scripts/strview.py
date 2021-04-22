@@ -196,20 +196,20 @@ if args.pysam == 1:
         #        aligned_ref_repeat = aligned_ref_repeat + ref_seq[tmp_pair[1]]
         #        repeat_cigar = repeat_cigar + "|"
         #        count = aligned_repeat.count(repeat)
-
-        prev_score = 0 
-        ref_seq = prefix + repeat + suffix
-        result = parasail.sw_trace_scan_32(read_seq, ref_seq, 5, 4, scoring_matrix)
-        score = result.score
-        c = 1
-        while score > prev_score:
-            c = c + 1
-            prev_score = score
-            ref_seq = prefix + ( repeat * c ) + suffix
+        if args.score == 1:
+            prev_score = 0 
+            ref_seq = prefix + repeat + suffix
             result = parasail.sw_trace_scan_32(read_seq, ref_seq, 5, 4, scoring_matrix)
             score = result.score
-        max_score = prev_score
-        alt_count = c - 1
+            c = 1
+            while score > prev_score:
+                c = c + 1
+                prev_score = score
+                ref_seq = prefix + ( repeat * c ) + suffix
+                result = parasail.sw_trace_scan_32(read_seq, ref_seq, 5, 4, scoring_matrix)
+                score = result.score
+            max_score = prev_score
+            alt_count = c - 1
 
         if aligned_prefix and aligned_repeat and aligned_suffix and args.verbose == 0 and tmp_count != 0:
             if args.score == 1:
