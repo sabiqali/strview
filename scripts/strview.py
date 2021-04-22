@@ -97,8 +97,12 @@ for read in pysam.FastxFile(control_file):
 
 bamfile = pysam.AlignmentFile(in_bam)
 if args.verbose == 0:
-    print("read_name\tchromosome\tcount\tposition\tprefix_sequence\trepeat_sequence\tsuffix_sequence")
-    align_data_file.write("read_name\tchromosome\tcount\tposition\tprefix_sequence\trepeat_sequence\tsuffix_sequence\n")
+    if args.score == 1:
+        print("read_name\tchromosome\tcount\talt_count\tposition\tprefix_sequence\trepeat_sequence\tsuffix_sequence")
+        align_data_file.write("read_name\tchromosome\tcount\talt_count\tposition\tprefix_sequence\trepeat_sequence\tsuffix_sequence\n")
+    else:
+        print("read_name\tchromosome\tcount\tposition\tprefix_sequence\trepeat_sequence\tsuffix_sequence")
+        align_data_file.write("read_name\tchromosome\tcount\tposition\tprefix_sequence\trepeat_sequence\tsuffix_sequence\n")
 
 upper_limit = roundup(int(begin))
 lower_limit = upper_limit - 100000    
@@ -191,28 +195,7 @@ if args.pysam == 1:
         #        aligned_ref_repeat = aligned_ref_repeat + ref_seq[tmp_pair[1]]
         #        repeat_cigar = repeat_cigar + "|"
         #        count = aligned_repeat.count(repeat)
-        if aligned_prefix and aligned_repeat and aligned_suffix and args.verbose == 0 and tmp_count != 0:
-            print("%s\t%s\t%d\t%s\t%s\t%s\t%s\n" % (alignment.qname,chromosome,tmp_count,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
-            #print(alignment.rname)
-            align_data_file.write("%s\t%s\t%d\t%s\t%s\t%s\t%s\n" % (alignment.qname,chromosome,tmp_count,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
-        if aligned_prefix and aligned_repeat and aligned_suffix and args.verbose == 1 and args.pysam == 1:
-            print(aligned_ref_prefix)
-            print(prefix_cigar)
-            print(aligned_prefix)
-            print(aligned_ref_repeat)
-            print(repeat_cigar)
-            print(aligned_repeat)
-            print(aligned_ref_suffix)
-            print(suffix_cigar)
-            print(aligned_suffix)
 
-
-idx = 0
-
-if args.score == 1:
-    scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
-    for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
-        read_seq = alignment.query_sequence
         prev_score = 0 
         ref_seq = prefix + repeat + suffix
         result = parasail.sw_trace_scan_32(read_seq, ref_seq, 5, 4, scoring_matrix)
@@ -225,8 +208,49 @@ if args.score == 1:
             result = parasail.sw_trace_scan_32(read_seq, ref_seq, 5, 4, scoring_matrix)
             score = result.score
         max_score = prev_score
-        count = c - 1
-        print("%s\t%s\t%d\t%s\n" % (alignment.qname,chromosome,count,alignment.pos))
+        alt_count = c - 1
+
+        if aligned_prefix and aligned_repeat and aligned_suffix and args.verbose == 0 and tmp_count != 0:
+            if args.score == 1:
+                print("%s\t%s\t%d\t%d\t%s\t%s\t%s\t%s\n" % (alignment.qname,chromosome,tmp_count,alt_count,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
+                #print(alignment.rname)
+                align_data_file.write("%s\t%s\t%d\t%d\t%s\t%s\t%s\t%s\n" % (alignment.qname,chromosome,tmp_count,alt_count,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
+            else:
+                print("%s\t%s\t%d\t%s\t%s\t%s\t%s\n" % (alignment.qname,chromosome,tmp_count,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
+                #print(alignment.rname)
+                align_data_file.write("%s\t%s\t%d\t%s\t%s\t%s\t%s\n" % (alignment.qname,chromosome,tmp_count,alignment.pos,aligned_prefix,aligned_repeat,aligned_suffix))
+        if aligned_prefix and aligned_repeat and aligned_suffix and args.verbose == 1 and args.pysam == 1:
+            print(aligned_ref_prefix)
+            print(prefix_cigar)
+            print(aligned_prefix)
+            print(aligned_ref_repeat)
+            print(repeat_cigar)
+            print(aligned_repeat)
+            print(aligned_ref_suffix)
+            print(suffix_cigar)
+            print(aligned_suffix)
+
+
+#idx = 0
+
+#if args.score == 1:
+#    scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
+#    for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
+#        read_seq = alignment.query_sequence
+#        prev_score = 0 
+#        ref_seq = prefix + repeat + suffix
+#        result = parasail.sw_trace_scan_32(read_seq, ref_seq, 5, 4, scoring_matrix)
+#        score = result.score
+#        c = 1
+#        while score > prev_score:
+#            c = c + 1
+#            prev_score = score
+#            ref_seq = prefix + ( repeat * c ) + suffix
+#            result = parasail.sw_trace_scan_32(read_seq, ref_seq, 5, 4, scoring_matrix)
+#            score = result.score
+#        max_score = prev_score
+#        count = c - 1
+#        print("%s\t%s\t%d\t%s\n" % (alignment.qname,chromosome,count,alignment.pos))
 
 idx = 0
 
