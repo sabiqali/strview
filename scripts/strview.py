@@ -49,6 +49,7 @@ parser.add_argument('--config', help='the config file', required=True)
 parser.add_argument('--output', help='the config file', required=True)
 parser.add_argument('--parasail', help='Obtain the alignments using parasail. Must be used with the verbose flag', required=False, type=int, default=0)
 parser.add_argument('--pysam', help='Obtain the alignments from the BAM File. Must be used with the verbose flag', required=False, type=int, default=0)
+parser.add_argument('--score', help='Have a look at the read, with an ideal reference, to see what count would maximise the alignment score', required=False, type=int, default=0)
 parser.add_argument('--verbose', help='display the alignments of the different regions', type=int, required=False, default=0)
 
 args = parser.parse_args()
@@ -204,6 +205,28 @@ if args.pysam == 1:
             print(aligned_ref_suffix)
             print(suffix_cigar)
             print(aligned_suffix)
+
+
+idx = 0
+
+if args.score == 1:
+    scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
+    for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
+        read_seq = alignment.query_sequence
+        prev_score = 0 
+        ref_seq = prefix + repeat + suffix
+        result = parasail.sw_trace_scan_32(read_seq, ref_seq, 5, 4, scoring_matrix)
+        score = result.score
+        c = 1
+        while score > prev_score:
+            c = c + 1
+            prev_score = score
+            ref_seq = prefix + ( repeat * c ) + suffix
+            result = parasail.sw_trace_scan_32(read_seq, ref_seq, 5, 4, scoring_matrix)
+            score = result.score
+        max_score = prev_score
+        count = c - 1
+        print("%s\t%s\t%d\t%s\n" % (alignment.qname,chromosome,count,alignment.pos))
 
 idx = 0
 
