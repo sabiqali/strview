@@ -310,7 +310,7 @@ with pysam.AlignmentFile(args.bam_output, "wb", header=header) as outf:
                     else:
                         outf.write(records[0])
             if(args.fastq_folder):
-                onlyfiles = [f for f in listdir(args.fastq_folder) if isfile(join(args.fastq_folder, f)) and f.endswith("fastq.gz")]
+                onlyfiles = [f for f in listdir(args.fastq_folder) if isfile(join(args.fastq_folder, f)) and f.endswith("fastq.bgz")]
                 out_count = 0
                 for file in onlyfiles:
                     # open each fastq. If reads we want are in the fastq look them up and get the specific sequence
