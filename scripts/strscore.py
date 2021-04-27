@@ -57,31 +57,32 @@ scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
 
 for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
     with pysam.FastaFile(reads_file) as fh:
-        for entry in fh.fetch(alignment.qname):
-            print(entry.name)
+        #for entry in fh.fetch(alignment.qname):
+        entry = fh.fetch(alignment.qname)
+        print(entry)
 
-            read_seq = entry.sequence
-            prev_score = 0 
-            ideal_read = prefix + repeat + suffix
+        read_seq = entry
+        prev_score = 0 
+        ideal_read = prefix + repeat + suffix
+        result = parasail.sw_trace_scan_32(read_seq, ideal_read, 5, 4, scoring_matrix)
+        prev_result_ref = result.traceback.ref
+        result_ref = result.traceback.ref
+        prev_result_query = result.traceback.query
+        result_query = result.traceback.query
+        score = result.score
+        c = 1
+        while score > prev_score:
+            c = c + 1
+            prev_score = score
+            prev_result_ref = result_ref
+            prev_result_query = result_query
+            ref_seq = prefix + ( repeat * c ) + suffix
             result = parasail.sw_trace_scan_32(read_seq, ideal_read, 5, 4, scoring_matrix)
-            prev_result_ref = result.traceback.ref
-            result_ref = result.traceback.ref
-            prev_result_query = result.traceback.query
-            result_query = result.traceback.query
             score = result.score
-            c = 1
-            while score > prev_score:
-                c = c + 1
-                prev_score = score
-                prev_result_ref = result_ref
-                prev_result_query = result_query
-                ref_seq = prefix + ( repeat * c ) + suffix
-                result = parasail.sw_trace_scan_32(read_seq, ideal_read, 5, 4, scoring_matrix)
-                score = result.score
-                result_ref = result.traceback.ref
-                result_query = result.traceback.query
-            max_score = prev_score
-            count = c - 1
+            result_ref = result.traceback.ref
+            result_query = result.traceback.query
+        max_score = prev_score
+        count = c - 1
 
     print("%s\t%s\t%d\t%s\t%s\t%s\n" % (alignment.qname,chromosome,count,alignment.pos,prev_result_query,prev_result_ref))
             
