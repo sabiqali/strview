@@ -59,7 +59,7 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
     with pysam.FastaFile(reads_file) as fh:
         #for entry in fh.fetch(alignment.qname):
         entry = fh.fetch(alignment.qname)
-        print(entry)
+        #print(entry)
 
         read_seq = entry
         prev_score = 0 
@@ -76,7 +76,7 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
             prev_score = score
             prev_result_ref = result_ref
             prev_result_query = result_query
-            ref_seq = prefix + ( repeat * c ) + suffix
+            ideal_read = prefix + ( repeat * c ) + suffix
             result = parasail.sw_trace_scan_32(read_seq, ideal_read, 5, 4, scoring_matrix)
             score = result.score
             result_ref = result.traceback.ref
