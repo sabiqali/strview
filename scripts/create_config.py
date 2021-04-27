@@ -17,7 +17,7 @@ control_file = args.ref
 
 control_file = args.ref
 motif = args.motif
-start = args.start
+begin = args.start
 end = args.end
 chromosome = args.chr
 name_motif = args.name
