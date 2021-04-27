@@ -5,6 +5,9 @@ import sys
 import pysam
 import argparse
 
+def roundup(x):
+    return int(math.ceil(x / 100000.0)) * 100000
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--bam', help='the bam file', required=False)
 parser.add_argument('--read', help='the read file', required=False)
