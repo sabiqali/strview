@@ -83,7 +83,7 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
             max_score = prev_score
             count = c - 1
 
-    print("%s\t%s\t%d\t%s\t%s\t%s\n" % (alignment.qname,chromosome,tmp_count,alignment.pos,prev_result_query,prev_result_ref))
+    print("%s\t%s\t%d\t%s\t%s\t%s\n" % (alignment.qname,chromosome,count,alignment.pos,prev_result_query,prev_result_ref))
             
-    align_data_file.write("%s\t%s\t%d\t%s\t%s\t%s\n" % (alignment.qname,chromosome,tmp_count,alignment.pos,prev_result_query,prev_result_ref))
+    align_data_file.write("%s\t%s\t%d\t%s\t%s\t%s\n" % (alignment.qname,chromosome,count,alignment.pos,prev_result_query,prev_result_ref))
 
