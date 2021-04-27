@@ -4,6 +4,7 @@ import parasail
 import sys
 import pysam
 import argparse
+import math
 
 def roundup(x):
     return int(math.ceil(x / 100000.0)) * 100000
