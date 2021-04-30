@@ -55,7 +55,14 @@ lower_limit = upper_limit - 100000
 idx = 0
 scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
 
+reads_parsed = {}
+
 for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
+    if alignment.qname in reads_parsed:
+        continue
+    else:
+        reads_parsed[alignment.qname] = 1
+        
     with pysam.FastaFile(reads_file) as fh:
         #for entry in fh.fetch(alignment.qname):
         entry = fh.fetch(alignment.qname)
