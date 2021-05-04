@@ -65,9 +65,8 @@ header = config_fh.readline()
 for line in config_fh:
     configs.append(line.rstrip().split()[0:7])
 
-for (chromosome,begin,end,name,repeat,prefix,suffix) in configs:
-    print(chromosome)
-
+chromosome,begin,end,name,repeat,prefix,suffix = configs[0]
+    
 #First pass through the alignment file to determine what are the matches.
 bamfile = pysam.AlignmentFile(in_bam)
 upper_limit = roundup(int(begin))
@@ -84,7 +83,7 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
         reads[alignment.qname].has_suffix_match = True
 
 #Once we have all the matches, we can iterate through them to get the count
-print("\t".join(["read_name","chromosome","count","aligned_query","aligned_ref"]))
+print("\t".join(["read_name","chromosome","repeat_name","count","aligned_query","aligned_ref"]))
 for read_name , alignment in reads.items():
     if not reads[read_name].has_prefix_match or not reads[read_name].has_suffix_match:
         continue
@@ -115,4 +114,4 @@ for read_name , alignment in reads.items():
         max_score = prev_score
         reads[read_name].count = c - 1
     
-    print( "\t".join([read_name,chromosome,str(reads[read_name].count),prev_result_query,prev_result_ref]))
+    print( "\t".join([read_name,chromosome,name,str(reads[read_name].count),prev_result_query,prev_result_ref]))
