@@ -69,12 +69,13 @@ for (chromosome,begin,end,name,repeat,prefix,suffix) in configs:
     print(chromosome)
 
 #First pass through the alignment file to determine what are the matches.
+bamfile = pysam.AlignmentFile(in_bam)
 upper_limit = roundup(int(begin))
 lower_limit = upper_limit - 10000
 idx = 0
 scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
 reads = dict()
-for alignment in bam.fetch(chromosome,lower_limit,upper_limit):
+for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
     if alignment.name not in reads:
         reads[alignment.name] = ReadAlignment(alignment.name)
     if alignment_contains_str_prefix( alignment , prefix, scoring_matrix):
