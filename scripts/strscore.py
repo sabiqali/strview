@@ -28,9 +28,26 @@ def percentage_identity(cigar_exp):
 def roundup(x):
     return int(math.ceil(x / 100000.0)) * 100000
 
-def alignment_contains_str_flank(alignment, flank, matrix):
-    result = parasail.sw_trace_scan_32(flank, alignment.query_sequence, 5, 4, scoring_matrix)
-    if(percentage_identity(result.traceback.comp) > 0.6):
+def alignment_contains_str_prefix(alignment,start):
+    pair_out = alignment.get_aligned_pairs(True)
+    c = 0
+    for tmp_pairs in  pair_out:
+        if tmp_pairs[1] < int(start) and tmp_pairs[1] >= (int(start) - 100):
+            c = c + 1
+    #result = parasail.sw_trace_scan_32(flank, alignment.query_sequence, 5, 4, scoring_matrix)
+    if((c/100) > 0.6):
+        return True
+    else: 
+        return False
+
+def alignment_contains_str_suffix(alignment,finish):
+    pair_out = alignment.get_aligned_pairs(True)
+    c = 0
+    for tmp_pairs in  pair_out:
+        if tmp_pairs[1] > int(finish) and tmp_pairs[1] <= (int(finish) + 100):
+            c = c + 1
+    #result = parasail.sw_trace_scan_32(flank, alignment.query_sequence, 5, 4, scoring_matrix)
+    if((c/100) > 0.6):
         return True
     else: 
         return False
@@ -70,9 +87,9 @@ reads = dict()
 for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
     if alignment.qname not in reads:
         reads[alignment.qname] = ReadAlignment(alignment.qname)
-    if alignment_contains_str_flank( alignment , prefix, scoring_matrix):
+    if alignment_contains_str_prefix( alignment , begin):
         reads[alignment.qname].has_prefix_match = True
-    if alignment_contains_str_flank( alignment, suffix, scoring_matrix):
+    if alignment_contains_str_suffix( alignment, end):
         reads[alignment.qname].has_suffix_match = True
 
 #Once we have all the matches, we can iterate through them to get the count
