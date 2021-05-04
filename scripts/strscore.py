@@ -96,11 +96,12 @@ for read_name , alignment in reads.items():
         result = parasail.sw_trace_scan_32(read_seq, ideal_read, 5, 4, scoring_matrix)
         prev_result_ref = result.traceback.ref
         result_ref = result.traceback.ref
+        result_comp = result.traceback.comp
         prev_result_query = result.traceback.query
         result_query = result.traceback.query
         score = result.score
         c = 1
-        while score > prev_score:
+        while (score > prev_score) and (percentage_identity(result_comp) > 0.5):
             c = c + 1
             prev_score = score
             prev_result_ref = result_ref
@@ -108,6 +109,7 @@ for read_name , alignment in reads.items():
             ideal_read = prefix + ( repeat * c ) + suffix
             result = parasail.sw_trace_scan_32(read_seq, ideal_read, 5, 4, scoring_matrix)
             score = result.score
+            result_comp = result.traceback.comp
             result_ref = result.traceback.ref
             result_query = result.traceback.query
         max_score = prev_score
