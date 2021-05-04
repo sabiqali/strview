@@ -29,14 +29,14 @@ def roundup(x):
     return int(math.ceil(x / 100000.0)) * 100000
 
 def alignment_contains_str_prefix(alignment, prefix, matrix):
-    result = parasail.sw_trace_scan_32(prefix, alignment.sequence, 5, 4, scoring_matrix)
+    result = parasail.sw_trace_scan_32(prefix, alignment.query_sequence, 5, 4, scoring_matrix)
     if(percentage_identity(result.traceback.comp) > 0.6):
         return True
     else: 
         return False
 
 def alignment_contains_str_suffix(alignment, suffix, matrix):
-    result = parasail.sw_trace_scan_32(suffix, alignment.sequence, 5, 4, scoring_matrix)
+    result = parasail.sw_trace_scan_32(suffix, alignment.query_sequence, 5, 4, scoring_matrix)
     if(percentage_identity(result.traceback.comp) > 0.6):
         return True
     else: 
@@ -71,25 +71,25 @@ for (chromosome,begin,end,name,repeat,prefix,suffix) in configs:
 #First pass through the alignment file to determine what are the matches.
 bamfile = pysam.AlignmentFile(in_bam)
 upper_limit = roundup(int(begin))
-lower_limit = upper_limit - 10000
+lower_limit = upper_limit - 100000
 idx = 0
 scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
 reads = dict()
 for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
-    if alignment.name not in reads:
-        reads[alignment.name] = ReadAlignment(alignment.name)
+    if alignment.qname not in reads:
+        reads[alignment.qname] = ReadAlignment(alignment.qname)
     if alignment_contains_str_prefix( alignment , prefix, scoring_matrix):
-        reads[alignment.name].has_prefix_match = True
+        reads[alignment.qname].has_prefix_match = True
     if alignment_contains_str_suffix( alignment, suffix, scoring_matrix):
-        reads[alignment.name].has_suffix_match = True
+        reads[alignment.qname].has_suffix_match = True
 
 #Once we have all the matches, we can iterate through them to get the count
-print("\t".join(["read_name","chromosome","count","position","aligned_query","aligned_ref"]))
-for read_name, alignment in reads.items():
-    if not reads[alignment.name].has_prefix_match or not reads[alignment.name].has_suffix_match:
+print("\t".join(["read_name","chromosome","count","aligned_query","aligned_ref"]))
+for read_name , alignment in reads.items():
+    if not reads[read_name].has_prefix_match or not reads[read_name].has_suffix_match:
         continue
     with pysam.FastaFile(reads_file) as fh:
-        entry = fh.fetch(alignment.qname)
+        entry = fh.fetch(read_name)
         read_seq = entry
         prev_score = 0 
         ideal_read = prefix + repeat + suffix
@@ -111,6 +111,6 @@ for read_name, alignment in reads.items():
             result_ref = result.traceback.ref
             result_query = result.traceback.query
         max_score = prev_score
-        reads[alignment.name].count = c - 1
+        reads[read_name].count = c - 1
     
-    print( "\t".join([alignment.qname,chromosome,reads[alignment.name].count,alignment.pos,prev_result_query,prev_result_ref]))
+    print( "\t".join([read_name,chromosome,str(reads[read_name].count),prev_result_query,prev_result_ref]))
