@@ -77,34 +77,35 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
 
 #Once we have all the matches, we can iterate through them to get the count
 print("\t".join(["read_name","chromosome","repeat_name","count","aligned_query","aligned_ref"]))
+fh = pysam.FastaFile(reads_file)
 for read_name , alignment in reads.items():
     if not reads[read_name].has_prefix_match or not reads[read_name].has_suffix_match:
         continue
-    with pysam.FastaFile(reads_file) as fh:
-        entry = fh.fetch(read_name)
-        read_seq = entry
-        prev_score = 0 
-        ideal_read = prefix + repeat + suffix
+    
+    entry = fh.fetch(read_name)
+    read_seq = entry
+    prev_score = 0 
+    ideal_read = prefix + repeat + suffix
+    result = parasail.sw_trace_scan_32(read_seq, ideal_read, 5, 4, scoring_matrix)
+    prev_result_ref = result.traceback.ref
+    result_ref = result.traceback.ref
+    result_comp = result.traceback.comp
+    prev_result_query = result.traceback.query
+    result_query = result.traceback.query
+    score = result.score
+    c = 1
+    while (score > prev_score) and (percentage_identity(result_comp) > 0.5):
+        c = c + 1
+        prev_score = score
+        prev_result_ref = result_ref
+        prev_result_query = result_query
+        ideal_read = prefix + ( repeat * c ) + suffix
         result = parasail.sw_trace_scan_32(read_seq, ideal_read, 5, 4, scoring_matrix)
-        prev_result_ref = result.traceback.ref
-        result_ref = result.traceback.ref
-        result_comp = result.traceback.comp
-        prev_result_query = result.traceback.query
-        result_query = result.traceback.query
         score = result.score
-        c = 1
-        while (score > prev_score) and (percentage_identity(result_comp) > 0.5):
-            c = c + 1
-            prev_score = score
-            prev_result_ref = result_ref
-            prev_result_query = result_query
-            ideal_read = prefix + ( repeat * c ) + suffix
-            result = parasail.sw_trace_scan_32(read_seq, ideal_read, 5, 4, scoring_matrix)
-            score = result.score
-            result_comp = result.traceback.comp
-            result_ref = result.traceback.ref
-            result_query = result.traceback.query
-        max_score = prev_score
-        reads[read_name].count = c - 1
+        result_comp = result.traceback.comp
+        result_ref = result.traceback.ref
+        result_query = result.traceback.query
+    max_score = prev_score
+    reads[read_name].count = c - 1
     
     print( "\t".join([read_name,chromosome,name,str(reads[read_name].count),prev_result_query,prev_result_ref]))
