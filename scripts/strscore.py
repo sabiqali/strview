@@ -32,14 +32,14 @@ def alignment_contains_str_prefix(alignment, prefix, matrix):
     result = parasail.sw_trace_scan_32(prefix, alignment.sequence, 5, 4, scoring_matrix)
     if(percentage_identity(result.traceback.comp) > 0.6):
         return True
-    else 
+    else: 
         return False
 
 def alignment_contains_str_suffix(alignment, suffix, matrix):
     result = parasail.sw_trace_scan_32(suffix, alignment.sequence, 5, 4, scoring_matrix)
     if(percentage_identity(result.traceback.comp) > 0.6):
         return True
-    else 
+    else: 
         return False
 
 parser = argparse.ArgumentParser()
