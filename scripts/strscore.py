@@ -6,27 +6,58 @@ import pysam
 import argparse
 import math
 
+class ReadAlignment:
+    def __init__(self, name):
+        self.read_name: name
+        self.has_prefix_match = False
+        self.has_suffix_match = False
+    
+    count = 0
+
+def percentage_identity(cigar_exp):
+    m = 0
+    nm = 0
+    for chr in cigar_exp:
+        if chr == '|':
+            m = m + 1
+        else:
+            nm = nm + 1
+    pi = float(m/(nm + m))
+    return pi
+
 def roundup(x):
     return int(math.ceil(x / 100000.0)) * 100000
+
+def alignment_contains_str_prefix(alignment, prefix, matrix):
+    result = parasail.sw_trace_scan_32(prefix, alignment.sequence, 5, 4, scoring_matrix)
+    if(percentage_identity(result.traceback.comp) > 0.6):
+        return True
+    else 
+        return False
+
+def alignment_contains_str_suffix(alignment, suffix, matrix):
+    result = parasail.sw_trace_scan_32(suffix, alignment.sequence, 5, 4, scoring_matrix)
+    if(percentage_identity(result.traceback.comp) > 0.6):
+        return True
+    else 
+        return False
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--bam', help='the bam file', required=False)
 parser.add_argument('--read', help='the read file', required=False)
 parser.add_argument('--ref', help='the ref file', required=True)
 parser.add_argument('--config', help='the config file', required=True)
-parser.add_argument('--output', help='the config file', required=True)
+parser.add_argument('--output', help='the config file', required=False)
 parser.add_argument('--verbose', help='display the alignments of the different regions', type=int, required=False, default=0)
 
 args = parser.parse_args()
 
 reads_file = args.read
-control_file = args.ref
+reference_file = args.ref
 config = args.config
 in_bam = args.bam
 
-align_data_file = open(args.output,'w')
-
-# read in the control sequences
+# read in the configs and store them in the respective variables
 configs = list()
 config_fh = open(config)
 header = config_fh.readline()
@@ -36,38 +67,28 @@ for line in config_fh:
 
 for (chromosome,begin,end,name,repeat,prefix,suffix) in configs:
     print(chromosome)
-    break
 
-ref_seq = []
-local_seq = []
-for read in pysam.FastxFile(control_file):
-    print(read.name)
-    if(read.name == chromosome):
-        ref_seq = read.sequence
-
-bamfile = pysam.AlignmentFile(in_bam)
-if args.verbose == 0:
-    print("read_name\tchromosome\tcount\tposition\taligned_query\taligned_ref")
-    align_data_file.write("read_name\tchromosome\tcount\tposition\taligned_query\taligned_ref\n")
-
+#First pass through the alignment file to determine what are the matches.
 upper_limit = roundup(int(begin))
-lower_limit = upper_limit - 100000    
+lower_limit = upper_limit - 10000
 idx = 0
 scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
+reads = dict()
+for alignment in bam.fetch(chromosome,lower_limit,upper_limit):
+    if alignment.name not in reads:
+        reads[alignment.name] = ReadAlignment(alignment.name)
+    if alignment_contains_str_prefix( alignment , prefix, scoring_matrix):
+        reads[alignment.name].has_prefix_match = True
+    if alignment_contains_str_suffix( alignment, suffix, scoring_matrix):
+        reads[alignment.name].has_suffix_match = True
 
-reads_parsed = {}
-
-for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
-    if alignment.qname in reads_parsed:
+#Once we have all the matches, we can iterate through them to get the count
+print("\t".join(["read_name","chromosome","count","position","aligned_query","aligned_ref"]))
+for read_name, alignment in reads.items():
+    if not reads[alignment.name].has_prefix_match or not reads[alignment.name].has_suffix_match:
         continue
-    else:
-        reads_parsed[alignment.qname] = 1
-        
     with pysam.FastaFile(reads_file) as fh:
-        #for entry in fh.fetch(alignment.qname):
         entry = fh.fetch(alignment.qname)
-        #print(entry)
-
         read_seq = entry
         prev_score = 0 
         ideal_read = prefix + repeat + suffix
@@ -89,9 +110,6 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
             result_ref = result.traceback.ref
             result_query = result.traceback.query
         max_score = prev_score
-        count = c - 1
-
-    print("%s\t%s\t%d\t%s\t%s\t%s\n" % (alignment.qname,chromosome,count,alignment.pos,prev_result_query,prev_result_ref))
-            
-    align_data_file.write("%s\t%s\t%d\t%s\t%s\t%s\n" % (alignment.qname,chromosome,count,alignment.pos,prev_result_query,prev_result_ref))
-
+        reads[alignment.name].count = c - 1
+    
+    print( "\t".join([alignment.qname,chromosome,reads[alignment.name].count,alignment.pos,prev_result_query,prev_result_ref]))
