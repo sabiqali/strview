@@ -95,11 +95,11 @@ idx = 0
 scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
 reads = dict()
 for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
-    if alignment.qname not in reads:
-        strand = '-' if alignment.is_reverse else '+'
+    strand = '-' if alignment.is_reverse else '+'
+    if alignment.qname not in reads:  
         reads[alignment.qname] = ReadAlignment(alignment.qname,strand)
         #reads[alignment.qname].strand == '-' if alignment.is_reverse else '+'
-    if reads[alignment.qname].strand != '' and reads[alignment.qname].strand != ('-' if alignment.is_reverse else '+'):
+    if reads[alignment.qname].strand != '' and reads[alignment.qname].strand != strand:
         reads[alignment.qname].bad_mapping = 1
     if alignment_contains_str_prefix( alignment , begin):
         reads[alignment.qname].has_prefix_match = True
