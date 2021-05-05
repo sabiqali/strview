@@ -7,13 +7,13 @@ import argparse
 import math
 
 class ReadAlignment:
-    def __init__(self, name):
+    def __init__(self, name, strand):
         self.read_name: name
         self.has_prefix_match = False
         self.has_suffix_match = False
-    
+        self.strand = strand
+
     count = 0
-    strand = ''
     bad_mapping = 0
 
 complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'} 
@@ -96,16 +96,16 @@ scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
 reads = dict()
 for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
     if alignment.qname not in reads:
-        reads[alignment.qname] = ReadAlignment(alignment.qname)
-    if reads[alignment.qname].strand == '':
-        reads[alignment.qname].strand == '-' if alignment.is_reverse else '+'
+        strand = '-' if alignment.is_reverse else '+'
+        reads[alignment.qname] = ReadAlignment(alignment.qname,strand)
+        #reads[alignment.qname].strand == '-' if alignment.is_reverse else '+'
     if reads[alignment.qname].strand != '' and reads[alignment.qname].strand != ('-' if alignment.is_reverse else '+'):
         reads[alignment.qname].bad_mapping = 1
     if alignment_contains_str_prefix( alignment , begin):
         reads[alignment.qname].has_prefix_match = True
     if alignment_contains_str_suffix( alignment, end):
         reads[alignment.qname].has_suffix_match = True
-
+ 
 #Once we have all the matches, we can iterate through them to get the count
 print("\t".join(["read_name","chromosome","repeat_name","count","strand","aligned_query","aligned_ref"]))
 fh = pysam.FastaFile(reads_file)
