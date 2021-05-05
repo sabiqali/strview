@@ -13,6 +13,16 @@ class ReadAlignment:
         self.has_suffix_match = False
     
     count = 0
+    strand = ''
+    bad_mapping = 0
+
+complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'} 
+
+def reverse_complement(seq):    
+    bases = list(seq) 
+    bases = reversed([complement.get(base,base) for base in bases])
+    bases = ''.join(bases)
+    return bases
 
 def percentage_identity(cigar_exp):
     m = 0
@@ -87,22 +97,35 @@ reads = dict()
 for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
     if alignment.qname not in reads:
         reads[alignment.qname] = ReadAlignment(alignment.qname)
+    if reads[alignment.qname].strand == '':
+        reads[alignment.qname].strand == '-' if alignment.is_reverse else '+'
+    if reads[alignment.qname].strand != '' and reads[alignment.qname].strand != ('-' if alignment.is_reverse else '+'):
+        reads[alignment.qname].bad_mapping = 1
     if alignment_contains_str_prefix( alignment , begin):
         reads[alignment.qname].has_prefix_match = True
     if alignment_contains_str_suffix( alignment, end):
         reads[alignment.qname].has_suffix_match = True
 
 #Once we have all the matches, we can iterate through them to get the count
-print("\t".join(["read_name","chromosome","repeat_name","count","aligned_query","aligned_ref"]))
+print("\t".join(["read_name","chromosome","repeat_name","count","strand","aligned_query","aligned_ref"]))
 fh = pysam.FastaFile(reads_file)
 for read_name , alignment in reads.items():
     if not reads[read_name].has_prefix_match or not reads[read_name].has_suffix_match:
         continue
-    
+    if reads[read_name].bad_mapping == 1:
+        continue
+    if reads[read_name].strand == '-':
+        repeat_unit = reverse_complement(repeat)
+        prefix_unit = reverse_complement(prefix)
+        suffix_unit = reverse_complement(suffix)
+    else:
+        repeat_unit = repeat
+        prefix_unit = reverse_complement(prefix)
+        suffix_unit = reverse_complement(suffix)
     entry = fh.fetch(read_name)
     read_seq = entry
     prev_score = 0 
-    ideal_read = prefix + repeat + suffix
+    ideal_read = prefix_unit + repeat_unit + suffix_unit
     result = parasail.sw_trace_scan_32(read_seq, ideal_read, 5, 4, scoring_matrix)
     prev_result_ref = result.traceback.ref
     result_ref = result.traceback.ref
@@ -116,7 +139,7 @@ for read_name , alignment in reads.items():
         prev_score = score
         prev_result_ref = result_ref
         prev_result_query = result_query
-        ideal_read = prefix + ( repeat * c ) + suffix
+        ideal_read = prefix_unit + ( repeat_unit * c ) + suffix_unit
         result = parasail.sw_trace_scan_32(read_seq, ideal_read, 5, 4, scoring_matrix)
         score = result.score
         result_comp = result.traceback.comp
@@ -125,4 +148,4 @@ for read_name , alignment in reads.items():
     max_score = prev_score
     reads[read_name].count = c - 1
     
-    print( "\t".join([read_name,chromosome,name,str(reads[read_name].count),prev_result_query,prev_result_ref]))
+    print( "\t".join([read_name,chromosome,name,str(reads[read_name].count),reads[read_name].strand,prev_result_query,prev_result_ref]))
