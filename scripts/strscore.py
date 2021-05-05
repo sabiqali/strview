@@ -120,8 +120,8 @@ for read_name , alignment in reads.items():
         suffix_unit = reverse_complement(suffix)
     else:
         repeat_unit = repeat
-        prefix_unit = reverse_complement(prefix)
-        suffix_unit = reverse_complement(suffix)
+        prefix_unit = prefix
+        suffix_unit = suffix
     entry = fh.fetch(read_name)
     read_seq = entry
     prev_score = 0 
