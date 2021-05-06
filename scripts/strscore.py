@@ -6,27 +6,78 @@ import pysam
 import argparse
 import math
 
+class ReadAlignment:
+    def __init__(self, name, strand):
+        self.read_name: name
+        self.has_prefix_match = False
+        self.has_suffix_match = False
+        self.strand = strand
+
+    count = 0
+    bad_mapping = 0
+
+complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'} 
+
+def reverse_complement(seq):    
+    bases = list(seq) 
+    bases = reversed([complement.get(base,base) for base in bases])
+    bases = ''.join(bases)
+    return bases
+
+def percentage_identity(cigar_exp):
+    m = 0
+    nm = 0
+    for chr in cigar_exp:
+        if chr == '|':
+            m = m + 1
+        else:
+            nm = nm + 1
+    pi = float(m/(nm + m))
+    return pi
+
 def roundup(x):
     return int(math.ceil(x / 100000.0)) * 100000
+
+def alignment_contains_str_prefix(alignment,start):
+    pair_out = alignment.get_aligned_pairs(True)
+    c = 0
+    for tmp_pairs in  pair_out:
+        if tmp_pairs[1] < int(start) and tmp_pairs[1] >= (int(start) - 100):
+            c = c + 1
+    #result = parasail.sw_trace_scan_32(flank, alignment.query_sequence, 5, 4, scoring_matrix)
+    if((c/100) > 0.6):
+        return True
+    else: 
+        return False
+
+def alignment_contains_str_suffix(alignment,finish):
+    pair_out = alignment.get_aligned_pairs(True)
+    c = 0
+    for tmp_pairs in  pair_out:
+        if tmp_pairs[1] > int(finish) and tmp_pairs[1] <= (int(finish) + 100):
+            c = c + 1
+    #result = parasail.sw_trace_scan_32(flank, alignment.query_sequence, 5, 4, scoring_matrix)
+    if((c/100) > 0.6):
+        return True
+    else: 
+        return False
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--bam', help='the bam file', required=False)
 parser.add_argument('--read', help='the read file', required=False)
 parser.add_argument('--ref', help='the ref file', required=True)
 parser.add_argument('--config', help='the config file', required=True)
-parser.add_argument('--output', help='the config file', required=True)
+parser.add_argument('--output', help='the config file', required=False)
 parser.add_argument('--verbose', help='display the alignments of the different regions', type=int, required=False, default=0)
 
 args = parser.parse_args()
 
 reads_file = args.read
-control_file = args.ref
+reference_file = args.ref
 config = args.config
 in_bam = args.bam
 
-align_data_file = open(args.output,'w')
-
-# read in the control sequences
+# read in the configs and store them in the respective variables
 configs = list()
 config_fh = open(config)
 header = config_fh.readline()
@@ -34,64 +85,67 @@ header = config_fh.readline()
 for line in config_fh:
     configs.append(line.rstrip().split()[0:7])
 
-for (chromosome,begin,end,name,repeat,prefix,suffix) in configs:
-    print(chromosome)
-    break
-
-ref_seq = []
-local_seq = []
-for read in pysam.FastxFile(control_file):
-    print(read.name)
-    if(read.name == chromosome):
-        ref_seq = read.sequence
-
+chromosome,begin,end,name,repeat,prefix,suffix = configs[0]
+    
+#First pass through the alignment file to determine what are the matches.
 bamfile = pysam.AlignmentFile(in_bam)
-if args.verbose == 0:
-    print("read_name\tchromosome\tcount\tposition\taligned_query\taligned_ref")
-    align_data_file.write("read_name\tchromosome\tcount\tposition\taligned_query\taligned_ref\n")
-
 upper_limit = roundup(int(begin))
-lower_limit = upper_limit - 100000    
+lower_limit = upper_limit - 100000
 idx = 0
 scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
-
-reads_parsed = {}
-
+reads = dict()
 for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
-    if alignment.qname in reads_parsed:
+    strand = '-' if alignment.is_reverse else '+'
+    if alignment.qname not in reads:  
+        reads[alignment.qname] = ReadAlignment(alignment.qname,strand)
+        #reads[alignment.qname].strand == '-' if alignment.is_reverse else '+'
+    if reads[alignment.qname].strand != '' and reads[alignment.qname].strand != strand:
+        reads[alignment.qname].bad_mapping = 1
+    if alignment_contains_str_prefix( alignment , begin):
+        reads[alignment.qname].has_prefix_match = True
+    if alignment_contains_str_suffix( alignment, end):
+        reads[alignment.qname].has_suffix_match = True
+ 
+#Once we have all the matches, we can iterate through them to get the count
+print("\t".join(["read_name","chromosome","repeat_name","count","strand","aligned_query","aligned_ref"]))
+fh = pysam.FastaFile(reads_file)
+for read_name , alignment in reads.items():
+    if not reads[read_name].has_prefix_match or not reads[read_name].has_suffix_match:
         continue
+    if reads[read_name].bad_mapping == 1:
+        continue
+    if reads[read_name].strand == '-':
+        repeat_unit = reverse_complement(repeat)
+        prefix_unit = reverse_complement(prefix)
+        suffix_unit = reverse_complement(suffix)
     else:
-        reads_parsed[alignment.qname] = 1
-        
-    with pysam.FastaFile(reads_file) as fh:
-        #for entry in fh.fetch(alignment.qname):
-        entry = fh.fetch(alignment.qname)
-        #print(entry)
-
-        read_seq = entry
-        prev_score = 0 
-        ideal_read = prefix + repeat + suffix
+        repeat_unit = repeat
+        prefix_unit = prefix
+        suffix_unit = suffix
+    entry = fh.fetch(read_name)
+    read_seq = entry
+    prev_score = 0 
+    ideal_read = prefix_unit + repeat_unit + suffix_unit
+    result = parasail.sw_trace_scan_32(read_seq, ideal_read, 5, 4, scoring_matrix)
+    prev_result_ref = result.traceback.ref
+    result_ref = result.traceback.ref
+    result_comp = result.traceback.comp
+    prev_result_query = result.traceback.query
+    result_query = result.traceback.query
+    score = result.score
+    c = 1
+    while (score > prev_score) and (percentage_identity(result_comp) > 0.5):
+        c = c + 1
+        prev_score = score
+        prev_result_ref = result_ref
+        prev_result_query = result_query
+        ideal_read = prefix_unit + ( repeat_unit * c ) + suffix_unit
         result = parasail.sw_trace_scan_32(read_seq, ideal_read, 5, 4, scoring_matrix)
-        prev_result_ref = result.traceback.ref
-        result_ref = result.traceback.ref
-        prev_result_query = result.traceback.query
-        result_query = result.traceback.query
         score = result.score
-        c = 1
-        while score > prev_score:
-            c = c + 1
-            prev_score = score
-            prev_result_ref = result_ref
-            prev_result_query = result_query
-            ideal_read = prefix + ( repeat * c ) + suffix
-            result = parasail.sw_trace_scan_32(read_seq, ideal_read, 5, 4, scoring_matrix)
-            score = result.score
-            result_ref = result.traceback.ref
-            result_query = result.traceback.query
-        max_score = prev_score
-        count = c - 1
-
-    print("%s\t%s\t%d\t%s\t%s\t%s\n" % (alignment.qname,chromosome,count,alignment.pos,prev_result_query,prev_result_ref))
-            
-    align_data_file.write("%s\t%s\t%d\t%s\t%s\t%s\n" % (alignment.qname,chromosome,count,alignment.pos,prev_result_query,prev_result_ref))
-
+        result_comp = result.traceback.comp
+        result_ref = result.traceback.ref
+        result_query = result.traceback.query
+    max_score = prev_score
+    reads[read_name].count = c - 1
+    
+    print( "\t".join([read_name,chromosome,name,str(reads[read_name].count),reads[read_name].strand,prev_result_query,prev_result_ref]))

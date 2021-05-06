@@ -23,7 +23,7 @@ count_list=[]
 c = 0
 d = 0
 for line in outputs:
-    count_list.append(int(line[2]))
+    count_list.append(int(line[3]))
 
 count_list.sort(reverse=True)
 #n, bins, patches = plt.hist(count_list)
