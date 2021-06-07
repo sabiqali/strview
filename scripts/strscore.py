@@ -56,7 +56,7 @@ def alignment_contains_str_suffix(alignment,end):
     pair_out = alignment.get_aligned_pairs(True)
     c = 0
     for tmp_pairs in  pair_out:
-        if tmp_pairs[1] < int(end) and tmp_pairs[1] >= (int(end) + 100):
+        if tmp_pairs[1] > int(end) and tmp_pairs[1] <= (int(end) + 100):
             c = c + 1
     #result = parasail.sw_trace_scan_32(flank, alignment.query_sequence, 5, 4, scoring_matrix)
     if((c/100) > 0.6):
@@ -66,14 +66,15 @@ def alignment_contains_str_suffix(alignment,end):
 
 def get_alignment_points(alignment,start,end):
     pair_out = alignment.get_aligned_pairs(True)
-    prefix_indexes = list()
-    suffix_indexes = list()
+    prefix_indexes = []
+    suffix_indexes = []
     for tmp_pairs in pair_out:
         if tmp_pairs[1] < int(start) and tmp_pairs[1] >= (int(start) - 100):
             prefix_indexes.append(tmp_pairs[1])
         if tmp_pairs[1] > int(end) and tmp_pairs[1] <= (int(end) + 100):
             suffix_indexes.append(tmp_pairs[1])
-    return (prefix_indexes[0],suffix_indexes[(len(suffix_indexes) - 1) if len(suffix_indexes) != 0 else 0])
+    #return (prefix_indexes[0],suffix_indexes[(len(suffix_indexes) - 1) if len(suffix_indexes) != 0 else 0])
+    return (prefix_indexes[0],suffix_indexes[-1])
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--bam', help='the bam file', required=False)
