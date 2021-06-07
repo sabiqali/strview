@@ -120,7 +120,10 @@ for read_name , alignment in reads.items():
     (prefix_start,prefix_end) = get_alignment_points(read_seq, prefix, scoring_matrix)
     (suffix_start,suffix_end) = get_alignment_points(read_seq, suffix, scoring_matrix)
 
-    repeat_region_with_flanks = read_seq[prefix_start:suffix_end]
+    if(prefix_start < suffix_end):
+        repeat_region_with_flanks = read_seq[prefix_start:suffix_end]
+    else:
+        continue
 
     prev_score = 0 
     ideal_read = prefix_unit + repeat_unit + suffix_unit
