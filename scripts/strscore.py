@@ -110,21 +110,22 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
 print("\t".join(["read_name","chromosome","repeat_name","count","strand","aligned_query","aligned_ref"]))
 fh = pysam.FastaFile(reads_file)
 for read_name , alignment in reads.items():
+    ideal_read = ""
     if not reads[read_name].has_prefix_match or not reads[read_name].has_suffix_match:
         continue
     if reads[read_name].bad_mapping == 1:
         continue
-    if reads[read_name].strand == '-':
-        repeat_unit = reverse_complement(repeat)
-        prefix_unit = reverse_complement(prefix)
-        suffix_unit = reverse_complement(suffix)
-    else:
-        repeat_unit = repeat
-        prefix_unit = prefix
-        suffix_unit = suffix
-    entry = fh.fetch(read_name)
-    read_seq = entry
+    #if reads[read_name].strand == '-':
+    repeat_unit = reverse_complement(repeat)
+    suffix_unit = reverse_complement(prefix)
+    prefix_unit = reverse_complement(suffix)
+    #else:
+    #    repeat_unit = repeat
+    #    prefix_unit = prefix
+    #    suffix_unit = suffix
+    read_seq = fh.fetch(read_name)
     prev_score = 0 
+    scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
     ideal_read = prefix_unit + repeat_unit + suffix_unit
     result = parasail.sw_trace_scan_32(read_seq, ideal_read, 5, 4, scoring_matrix)
     prev_result_ref = result.traceback.ref
@@ -147,5 +148,13 @@ for read_name , alignment in reads.items():
         result_query = result.traceback.query
     max_score = prev_score
     reads[read_name].count = c - 1
+    #if read_name == "2341b29f-7f5d-4496-8185-90bbe539251a" or read_name == "98b0e60a-0b39-4e44-9a8b-8fc78d53bc72":
+    #    print(read_name)
+    #    print(read_seq)
+    #    print(c-1)
+    #    print(len(repeat))
+    #    print(len(prefix))
+    #    print(len(suffix))
+    #    print(len(read_seq))
     
     print( "\t".join([read_name,chromosome,name,str(reads[read_name].count),reads[read_name].strand,prev_result_query,prev_result_ref]))
