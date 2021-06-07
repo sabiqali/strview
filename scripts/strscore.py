@@ -50,8 +50,8 @@ def alignment_contains_str_flank(alignment,start):
     else: 
         return False
 
-def get_alignment_points(read,flank):
-    result = parasail.ssw(read,flank,5,4,scoring_matrix)
+def get_alignment_points(read,flank,matrix):
+    result = parasail.ssw(flank,read,5,4,matrix)
     return (result.ref_begin1,result.ref_end1)
 
 parser = argparse.ArgumentParser()
@@ -59,7 +59,7 @@ parser.add_argument('--bam', help='the bam file', required=False)
 parser.add_argument('--read', help='the read file', required=False)
 parser.add_argument('--ref', help='the ref file', required=True)
 parser.add_argument('--config', help='the config file', required=True)
-parser.add_argument('--output', help='the config file', required=False)
+parser.add_argument('--output', help='the output file', required=False)
 parser.add_argument('--verbose', help='display the alignments of the different regions', type=int, required=False, default=0)
 
 args = parser.parse_args()
@@ -117,10 +117,10 @@ for read_name , alignment in reads.items():
         suffix_unit = suffix
     read_seq = fh.fetch(read_name)
 
-    (prefix_start,prefix_end) = get_alignment_points(read_seq,prefix)
-    (suffix_start,suffix_end) = get_alignment_points(read_seq, suffix)
+    (prefix_start,prefix_end) = get_alignment_points(read_seq, prefix, scoring_matrix)
+    (suffix_start,suffix_end) = get_alignment_points(read_seq, suffix, scoring_matrix)
 
-    repeat_region_with_flanks = read_seq[prefix_start,suffix_end]
+    repeat_region_with_flanks = read_seq[prefix_start:suffix_end]
 
     prev_score = 0 
     ideal_read = prefix_unit + repeat_unit + suffix_unit
