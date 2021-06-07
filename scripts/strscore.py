@@ -38,7 +38,7 @@ def percentage_identity(cigar_exp):
 def roundup(x):
     return int(math.ceil(x / 100000.0)) * 100000
 
-def alignment_contains_str_prefix(alignment,start):
+def alignment_contains_str_flank(alignment,start):
     pair_out = alignment.get_aligned_pairs(True)
     c = 0
     for tmp_pairs in  pair_out:
@@ -50,17 +50,9 @@ def alignment_contains_str_prefix(alignment,start):
     else: 
         return False
 
-def alignment_contains_str_suffix(alignment,finish):
-    pair_out = alignment.get_aligned_pairs(True)
-    c = 0
-    for tmp_pairs in  pair_out:
-        if tmp_pairs[1] > int(finish) and tmp_pairs[1] <= (int(finish) + 100):
-            c = c + 1
-    #result = parasail.sw_trace_scan_32(flank, alignment.query_sequence, 5, 4, scoring_matrix)
-    if((c/100) > 0.6):
-        return True
-    else: 
-        return False
+def get_alignment_points(read,flank):
+    result = parasail.ssw(read,flank,5,4,scoring_matrix)
+    return (result.ref_begin1,result.ref_end1)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--bam', help='the bam file', required=False)
@@ -101,9 +93,9 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
         #reads[alignment.qname].strand == '-' if alignment.is_reverse else '+'
     if reads[alignment.qname].strand != '' and reads[alignment.qname].strand != strand:
         reads[alignment.qname].bad_mapping = 1
-    if alignment_contains_str_prefix( alignment , begin):
+    if alignment_contains_str_flank( alignment , begin):
         reads[alignment.qname].has_prefix_match = True
-    if alignment_contains_str_suffix( alignment, end):
+    if alignment_contains_str_flank( alignment, end):
         reads[alignment.qname].has_suffix_match = True
  
 #Once we have all the matches, we can iterate through them to get the count
@@ -115,19 +107,24 @@ for read_name , alignment in reads.items():
         continue
     if reads[read_name].bad_mapping == 1:
         continue
-    #if reads[read_name].strand == '-':
-    repeat_unit = reverse_complement(repeat)
-    suffix_unit = reverse_complement(prefix)
-    prefix_unit = reverse_complement(suffix)
-    #else:
-    #    repeat_unit = repeat
-    #    prefix_unit = prefix
-    #    suffix_unit = suffix
+    if reads[read_name].strand == '-':
+        repeat_unit = reverse_complement(repeat)
+        suffix_unit = reverse_complement(prefix)
+        prefix_unit = reverse_complement(suffix)
+    else:
+        repeat_unit = repeat
+        prefix_unit = prefix
+        suffix_unit = suffix
     read_seq = fh.fetch(read_name)
+
+    (prefix_start,prefix_end) = get_alignment_points(read_seq,prefix)
+    (suffix_start,suffix_end) = get_alignment_points(read_seq, suffix)
+
+    repeat_region_with_flanks = read_seq[prefix_start,suffix_end]
+
     prev_score = 0 
-    scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
     ideal_read = prefix_unit + repeat_unit + suffix_unit
-    result = parasail.sw_trace_scan_32(read_seq, ideal_read, 5, 4, scoring_matrix)
+    result = parasail.nw_trace_scan_32(repeat_region_with_flanks, ideal_read, 5, 4, scoring_matrix)
     prev_result_ref = result.traceback.ref
     result_ref = result.traceback.ref
     result_comp = result.traceback.comp
@@ -141,7 +138,7 @@ for read_name , alignment in reads.items():
         prev_result_ref = result_ref
         prev_result_query = result_query
         ideal_read = prefix_unit + ( repeat_unit * c ) + suffix_unit
-        result = parasail.sw_trace_scan_32(read_seq, ideal_read, 5, 4, scoring_matrix)
+        result = parasail.nw_trace_scan_32(repeat_region_with_flanks, ideal_read, 5, 4, scoring_matrix)
         score = result.score
         result_comp = result.traceback.comp
         result_ref = result.traceback.ref
