@@ -15,6 +15,8 @@ class ReadAlignment:
 
     count = 0
     bad_mapping = 0
+    prefix_start = 0
+    suffix_end = 0
 
 complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'} 
 
@@ -38,7 +40,7 @@ def percentage_identity(cigar_exp):
 def roundup(x):
     return int(math.ceil(x / 100000.0)) * 100000
 
-def alignment_contains_str_flank(alignment,start):
+def alignment_contains_str_prefix(alignment,start):
     pair_out = alignment.get_aligned_pairs(True)
     c = 0
     for tmp_pairs in  pair_out:
@@ -50,9 +52,28 @@ def alignment_contains_str_flank(alignment,start):
     else: 
         return False
 
-def get_alignment_points(read,flank,matrix):
-    result = parasail.ssw(flank,read,5,4,matrix)
-    return (result.ref_begin1,result.ref_end1)
+def alignment_contains_str_suffix(alignment,end):
+    pair_out = alignment.get_aligned_pairs(True)
+    c = 0
+    for tmp_pairs in  pair_out:
+        if tmp_pairs[1] < int(end) and tmp_pairs[1] >= (int(end) + 100):
+            c = c + 1
+    #result = parasail.sw_trace_scan_32(flank, alignment.query_sequence, 5, 4, scoring_matrix)
+    if((c/100) > 0.6):
+        return True
+    else: 
+        return False
+
+def get_alignment_points(alignment,start,end):
+    pair_out = alignment.get_aligned_pairs(True)
+    prefix_indexes = list()
+    suffix_indexes = list()
+    for tmp_pairs in pair_out:
+        if tmp_pairs[1] < int(start) and tmp_pairs[1] >= (int(start) - 100):
+            prefix_indexes.append(tmp_pairs[1])
+        if tmp_pairs[1] > int(end) and tmp_pairs[1] <= (int(end) + 100):
+            suffix_indexes.append(tmp_pairs[1])
+    return (prefix_indexes[0],suffix_indexes[len(suffix_indexes) - 1])
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--bam', help='the bam file', required=False)
@@ -93,10 +114,14 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
         #reads[alignment.qname].strand == '-' if alignment.is_reverse else '+'
     if reads[alignment.qname].strand != '' and reads[alignment.qname].strand != strand:
         reads[alignment.qname].bad_mapping = 1
-    if alignment_contains_str_flank( alignment , begin):
+    if alignment_contains_str_prefix( alignment , begin):
         reads[alignment.qname].has_prefix_match = True
-    if alignment_contains_str_flank( alignment, end):
+    if alignment_contains_str_suffix( alignment, end):
         reads[alignment.qname].has_suffix_match = True
+    (prefix_start_tmp,suffix_end_tmp) = get_alignment_points(alignment,begin,end)
+    reads[alignment.qname].prefix_start = prefix_start_tmp
+    reads[alignment.qname].suffix_end = suffix_end_tmp
+
  
 #Once we have all the matches, we can iterate through them to get the count
 print("\t".join(["read_name","chromosome","repeat_name","count","strand","aligned_query","aligned_ref"]))
@@ -107,21 +132,21 @@ for read_name , alignment in reads.items():
         continue
     if reads[read_name].bad_mapping == 1:
         continue
-    if reads[read_name].strand == '-':
-        repeat_unit = reverse_complement(repeat)
-        suffix_unit = reverse_complement(prefix)
-        prefix_unit = reverse_complement(suffix)
-    else:
-        repeat_unit = repeat
-        prefix_unit = prefix
-        suffix_unit = suffix
+    #if reads[read_name].strand == '-':
+    #    repeat_unit = reverse_complement(repeat)
+    #    suffix_unit = reverse_complement(prefix)
+    #    prefix_unit = reverse_complement(suffix)
+    #else:
+    repeat_unit = repeat
+    prefix_unit = prefix
+    suffix_unit = suffix
     read_seq = fh.fetch(read_name)
 
-    (prefix_start,prefix_end) = get_alignment_points(read_seq, prefix, scoring_matrix)
-    (suffix_start,suffix_end) = get_alignment_points(read_seq, suffix, scoring_matrix)
+    prefix_start_tmp = reads[read_name].prefix_start
+    suffix_end_tmp = reads[read_name].suffix_end
 
-    if(prefix_start < suffix_end):
-        repeat_region_with_flanks = read_seq[prefix_start:suffix_end]
+    if(prefix_start_tmp < suffix_end_tmp):
+        repeat_region_with_flanks = read_seq[prefix_start_tmp:suffix_end_tmp]
     else:
         continue
 
