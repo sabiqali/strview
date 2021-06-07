@@ -73,7 +73,7 @@ def get_alignment_points(alignment,start,end):
             prefix_indexes.append(tmp_pairs[1])
         if tmp_pairs[1] > int(end) and tmp_pairs[1] <= (int(end) + 100):
             suffix_indexes.append(tmp_pairs[1])
-    return (prefix_indexes[0],suffix_indexes[len(suffix_indexes) - 1])
+    return (prefix_indexes[0],suffix_indexes[(len(suffix_indexes) - 1) if len(suffix_indexes) != 0 else 0])
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--bam', help='the bam file', required=False)
