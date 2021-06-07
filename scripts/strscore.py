@@ -71,8 +71,10 @@ def get_alignment_points(alignment,start,end):
     for tmp_pairs in pair_out:
         if tmp_pairs[1] < int(start) and tmp_pairs[1] >= (int(start) - 100):
             prefix_indexes.append(tmp_pairs[1])
+            print(prefix_indexes)
         if tmp_pairs[1] > int(end) and tmp_pairs[1] <= (int(end) + 100):
             suffix_indexes.append(tmp_pairs[1])
+            print(suffix_indexes)
     #return (prefix_indexes[0],suffix_indexes[(len(suffix_indexes) - 1) if len(suffix_indexes) != 0 else 0])
     return (prefix_indexes[0],suffix_indexes[-1])
 
