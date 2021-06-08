@@ -68,14 +68,19 @@ def get_alignment_points(alignment,start,end):
     pair_out = alignment.get_aligned_pairs(True)
     prefix_indexes = []
     suffix_indexes = []
-    print(pair_out)
+    c = 0
     for tmp_pairs in pair_out:
         if tmp_pairs[1] < int(start) and tmp_pairs[1] >= (int(start) - 100):
-            prefix_indexes.append(tmp_pairs[1])
+            prefix_indexes.append(tmp_pairs[0])
         if tmp_pairs[1] > int(end) and tmp_pairs[1] <= (int(end) + 100):
-            suffix_indexes.append(tmp_pairs[1])
+            suffix_indexes.append(tmp_pairs[0])
+        c = c + 1
     #return (prefix_indexes[0],suffix_indexes[(len(suffix_indexes) - 1) if len(suffix_indexes) != 0 else 0])
-    return (prefix_indexes[0],suffix_indexes[-1])
+    return (prefix_indexes,suffix_indexes)
+
+def get_alignment_point_parasail(read,flank,matrix):
+    result = parasail.ssw(flank,read,matrix)
+    return (result.ref_begin1, result.ref_end1)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--bam', help='the bam file', required=False)
@@ -104,8 +109,8 @@ chromosome,begin,end,name,repeat,prefix,suffix = configs[0]
     
 #First pass through the alignment file to determine what are the matches.
 bamfile = pysam.AlignmentFile(in_bam)
-upper_limit = roundup(int(begin))
-lower_limit = upper_limit - 100000
+upper_limit = int(end) + 5000 
+lower_limit = int(begin) - 5000
 idx = 0
 scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
 reads = dict()
@@ -121,8 +126,10 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
     if alignment_contains_str_suffix( alignment, end):
         reads[alignment.qname].has_suffix_match = True
     (prefix_start_tmp,suffix_end_tmp) = get_alignment_points(alignment,begin,end)
-    reads[alignment.qname].prefix_start = prefix_start_tmp
-    reads[alignment.qname].suffix_end = suffix_end_tmp
+    if prefix_start_tmp:
+        reads[alignment.qname].prefix_start = prefix_start_tmp[0]
+    if suffix_end_tmp:
+        reads[alignment.qname].suffix_end = suffix_end_tmp[-1]
 
  
 #Once we have all the matches, we can iterate through them to get the count
@@ -153,22 +160,22 @@ for read_name , alignment in reads.items():
         continue
 
     prev_score = 0 
-    ideal_read = prefix_unit + repeat_unit + suffix_unit
-    result = parasail.nw_trace_scan_32(repeat_region_with_flanks, ideal_read, 5, 4, scoring_matrix)
+    c = 3
+    ideal_read = prefix_unit + ( repeat_unit * c ) + suffix_unit
+    result = parasail.sw_trace_scan_32(repeat_region_with_flanks, ideal_read, 5, 4, scoring_matrix)
     prev_result_ref = result.traceback.ref
     result_ref = result.traceback.ref
     result_comp = result.traceback.comp
     prev_result_query = result.traceback.query
     result_query = result.traceback.query
     score = result.score
-    c = 1
     while (score > prev_score) and (percentage_identity(result_comp) > 0.5):
         c = c + 1
         prev_score = score
         prev_result_ref = result_ref
         prev_result_query = result_query
         ideal_read = prefix_unit + ( repeat_unit * c ) + suffix_unit
-        result = parasail.nw_trace_scan_32(repeat_region_with_flanks, ideal_read, 5, 4, scoring_matrix)
+        result = parasail.sw_trace_scan_32(repeat_region_with_flanks, ideal_read, 5, 4, scoring_matrix)
         score = result.score
         result_comp = result.traceback.comp
         result_ref = result.traceback.ref
