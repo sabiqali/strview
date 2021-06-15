@@ -78,8 +78,8 @@ def get_alignment_points(alignment,start,end):
     #return (prefix_indexes[0],suffix_indexes[(len(suffix_indexes) - 1) if len(suffix_indexes) != 0 else 0])
     return (prefix_indexes,suffix_indexes)
 
-def get_alignment_point_parasail(read,flank,matrix):
-    result = parasail.ssw(flank,read,matrix)
+def get_alignment_points_parasail(read,flank,matrix):
+    result = parasail.ssw(flank,read,5,4,matrix)
     return (result.ref_begin1, result.ref_end1)
 
 parser = argparse.ArgumentParser()
@@ -109,8 +109,8 @@ chromosome,begin,end,name,repeat,prefix,suffix = configs[0]
     
 #First pass through the alignment file to determine what are the matches.
 bamfile = pysam.AlignmentFile(in_bam)
-upper_limit = int(end) + 5000 
-lower_limit = int(begin) - 5000
+upper_limit = int(end) + 500 
+lower_limit = int(begin) - 500
 idx = 0
 scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
 reads = dict()
@@ -154,6 +154,9 @@ for read_name , alignment in reads.items():
     prefix_start_tmp = reads[read_name].prefix_start
     suffix_end_tmp = reads[read_name].suffix_end
 
+    #(prefix_start_tmp,prefix_end_tmp) = get_alignment_points_parasail(read_seq,prefix,scoring_matrix)
+    #(suffix_start_tmp,suffix_end_tmp) = get_alignment_points_parasail(read_seq,suffix,scoring_matrix)
+
     if(prefix_start_tmp < suffix_end_tmp):
         repeat_region_with_flanks = read_seq[prefix_start_tmp:suffix_end_tmp]
     else:
@@ -162,20 +165,21 @@ for read_name , alignment in reads.items():
     prev_score = 0 
     c = 3
     ideal_read = prefix_unit + ( repeat_unit * c ) + suffix_unit
-    result = parasail.sw_trace_scan_32(repeat_region_with_flanks, ideal_read, 5, 4, scoring_matrix)
+    result = parasail.nw_trace_scan_32(repeat_region_with_flanks, ideal_read, 5, 4, scoring_matrix)
     prev_result_ref = result.traceback.ref
     result_ref = result.traceback.ref
     result_comp = result.traceback.comp
     prev_result_query = result.traceback.query
     result_query = result.traceback.query
     score = result.score
-    while (score > prev_score) and (percentage_identity(result_comp) > 0.5):
+    prev_score = score
+    while (score >= prev_score):
         c = c + 1
         prev_score = score
         prev_result_ref = result_ref
         prev_result_query = result_query
         ideal_read = prefix_unit + ( repeat_unit * c ) + suffix_unit
-        result = parasail.sw_trace_scan_32(repeat_region_with_flanks, ideal_read, 5, 4, scoring_matrix)
+        result = parasail.nw_trace_scan_32(repeat_region_with_flanks, ideal_read, 5, 4, scoring_matrix)
         score = result.score
         result_comp = result.traceback.comp
         result_ref = result.traceback.ref
