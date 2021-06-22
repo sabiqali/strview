@@ -67,6 +67,7 @@ def alignment_contains_str_suffix(alignment,end):
 def get_alignment_points_prefix(alignment,start,flength):
     pair_out = alignment.get_aligned_pairs(True)
     c = 0
+    last_index = int(start)
     for i in range(int(start) - flength, int(start)):
         for tmp_pairs in pair_out:
             if tmp_pairs[1] == i:
@@ -78,6 +79,7 @@ def get_alignment_points_prefix(alignment,start,flength):
 def get_alignment_points_suffix(alignment,end,flength):
     pair_out = alignment.get_aligned_pairs(True)
     c = 0
+    last_index = int(end)
     for i in range(int(end), int(end) + flength):
         for tmp_pairs in pair_out:
             if tmp_pairs[1] == i:
@@ -147,7 +149,7 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
         reads[alignment.qname].has_prefix_match = True
     if alignment_contains_str_suffix( alignment, end):
         reads[alignment.qname].has_suffix_match = True
-    #(prefix_start_tmp,suffix_end_tmp) = get_alignment_points(alignment,begin,end)
+    #(prefix_start_tmp,suffix_end_tmp) = get_alignment_points(alignment,begin,end)  #This is the usual way, trying something new with the new function
     #if prefix_start_tmp:
     #    reads[alignment.qname].prefix_start = prefix_start_tmp[0]
     #if suffix_end_tmp:
