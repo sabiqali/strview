@@ -64,6 +64,28 @@ def alignment_contains_str_suffix(alignment,end):
     else: 
         return False
 
+def get_alignment_points_prefix(alignment,start,flength):
+    pair_out = alignment.get_aligned_pairs(True)
+    c = 0
+    for i in range(int(start) - flength, int(start)):
+        for tmp_pairs in pair_out:
+            if tmp_pairs[1] == i:
+                last_index = tmp_pairs[0]
+                c= c + 1
+    start_index = last_index - c
+    return (start_index, last_index)
+
+def get_alignment_points_suffix(alignment,end,flength):
+    pair_out = alignment.get_aligned_pairs(True)
+    c = 0
+    for i in range(int(end), int(end) + flength):
+        for tmp_pairs in pair_out:
+            if tmp_pairs[1] == i:
+                last_index = tmp_pairs[0]
+                c= c + 1
+    start_index = last_index - c
+    return (start_index, last_index)
+
 def get_alignment_points(alignment,start,end):
     pair_out = alignment.get_aligned_pairs(True)
     prefix_indexes = []
