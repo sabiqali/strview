@@ -147,12 +147,15 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
         reads[alignment.qname].has_prefix_match = True
     if alignment_contains_str_suffix( alignment, end):
         reads[alignment.qname].has_suffix_match = True
-    (prefix_start_tmp,suffix_end_tmp) = get_alignment_points(alignment,begin,end)
-    if prefix_start_tmp:
-        reads[alignment.qname].prefix_start = prefix_start_tmp[0]
-    if suffix_end_tmp:
-        reads[alignment.qname].suffix_end = suffix_end_tmp[-1]
-
+    #(prefix_start_tmp,suffix_end_tmp) = get_alignment_points(alignment,begin,end)
+    #if prefix_start_tmp:
+    #    reads[alignment.qname].prefix_start = prefix_start_tmp[0]
+    #if suffix_end_tmp:
+    #    reads[alignment.qname].suffix_end = suffix_end_tmp[-1]
+    (prefix_start_tmp, prefix_end_tmp) = get_alignment_points_prefix(alignment,begin, len(prefix))
+    (suffix_start_tmp, suffix_end_tmp) = get_alignment_points_suffix(alignment, end, len(suffix))
+    reads[alignment.qname].prefix_start = prefix_start_tmp
+    reads[alignment.qname].suffix_end = suffix_end_tmp
  
 #Once we have all the matches, we can iterate through them to get the count
 print("\t".join(["read_name","chromosome","repeat_name","count","strand","aligned_query","aligned_ref"]))
