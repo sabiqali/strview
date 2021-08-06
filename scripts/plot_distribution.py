@@ -55,5 +55,7 @@ plt.title('distribution')
 plt.savefig(output_file_name)
 
 print(count_list)
-print("%d %d"%(c,most_common(count_list)))
-
+print("Mean %d"%(statistics.mean(count_list)))
+print("Median %d"%(statistics.median(count_list)))
+print("Mode %d"%(most_common(count_list)))
+print("SD %d"%(statistics.stdev(count_list)))

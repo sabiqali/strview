@@ -143,15 +143,15 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
     if alignment.qname not in reads:  
         reads[alignment.qname] = ReadAlignment(alignment.qname,strand)
         #reads[alignment.qname].strand == '-' if alignment.is_reverse else '+'
-    #if reads[alignment.qname].strand != '' and reads[alignment.qname].strand != strand:
-    #    reads[alignment.qname].bad_mapping = 1
+    if reads[alignment.qname].strand != '' and reads[alignment.qname].strand != strand:
+        reads[alignment.qname].bad_mapping = 1
         #print("test")
-    #if alignment_contains_str_prefix( alignment , begin):
+    if alignment_contains_str_prefix( alignment , begin):
         #print("test1")
-    #    reads[alignment.qname].has_prefix_match = True
-    #if alignment_contains_str_suffix( alignment, end):
+        reads[alignment.qname].has_prefix_match = True
+    if alignment_contains_str_suffix( alignment, end):
         #print("test2")
-    #    reads[alignment.qname].has_suffix_match = True
+        reads[alignment.qname].has_suffix_match = True
     #(prefix_start_tmp,suffix_end_tmp) = get_alignment_points(alignment,begin,end)  #This is the usual way, trying something new with the new function
     #if prefix_start_tmp:
     #    reads[alignment.qname].prefix_start = prefix_start_tmp[0]
@@ -168,10 +168,10 @@ fh = pysam.FastaFile(reads_file)
 for read_name , alignment in reads.items():
     ideal_read = ""
     #print("test2")
-    #if not reads[read_name].has_prefix_match or not reads[read_name].has_suffix_match:
-    #    continue
-    #if reads[read_name].bad_mapping == 1:
-    #    continue
+    if not reads[read_name].has_prefix_match or not reads[read_name].has_suffix_match:
+        continue
+    if reads[read_name].bad_mapping == 1:
+        continue
     #if reads[read_name].strand == '-':
     #    repeat_unit = reverse_complement(repeat)
     #    suffix_unit = reverse_complement(prefix)
