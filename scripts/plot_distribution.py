@@ -18,6 +18,7 @@ import seaborn as sns
 
 import statistics
 from statistics import mode
+#from statistics import multimode
  
 def most_common(List):
     return(mode(List))
@@ -36,13 +37,13 @@ output_file_name = name+".png"
 header = input_file.readline()
 outputs = list()
 for line in input_file:
-    outputs.append(line.rstrip().split()[0:6])
+    outputs.append(line.rstrip().split()[0:9])
 
 count_list=[]
 c = 0
 d = 0
 for line in outputs:
-    if(int(line[3]) != 3):
+    if(int(line[3]) <= 200):
         count_list.append(int(line[3]))
 
 count_list.sort(reverse=True)
@@ -58,4 +59,5 @@ print(count_list)
 print("Mean %d"%(statistics.mean(count_list)))
 print("Median %d"%(statistics.median(count_list)))
 print("Mode %d"%(most_common(count_list)))
+#print("Mode %d"%(statistics.multimode(count_list)))
 print("SD %d"%(statistics.stdev(count_list)))

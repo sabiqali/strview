@@ -131,6 +131,12 @@ for line in config_fh:
 
 chromosome,begin,end,name,repeat,prefix,suffix = configs[0]
     
+for read in pysam.FastxFile(reference_file):
+    if(read.name == chromosome):
+        ref_seq = read.sequence
+
+max_repeats = 250
+
 #First pass through the alignment file to determine what are the matches.
 bamfile = pysam.AlignmentFile(in_bam)
 upper_limit = int(end) 
@@ -183,6 +189,10 @@ for read_name , alignment in reads.items():
     suffix_unit = suffix
     read_seq = fh.fetch(read_name)
 
+    max_length = len(ref_seq) + (max_repeats * len(repeat_unit))
+    if len(read_seq) > max_length:
+        continue
+
     prefix_start_tmp = reads[read_name].prefix_start
     suffix_end_tmp = reads[read_name].suffix_end
 
@@ -199,7 +209,7 @@ for read_name , alignment in reads.items():
 
     #print("test1")
     prev_score = 0 
-    c = 3
+    c = 0
     ideal_read = prefix_unit + ( repeat_unit * c ) + suffix_unit
     #print("test4")
     #print(ideal_read)
@@ -240,4 +250,4 @@ for read_name , alignment in reads.items():
     #    print(len(suffix))
     #    print(len(read_seq))
     
-    print( "\t".join([read_name,chromosome,name,str(reads[read_name].count),reads[read_name].strand,prev_result_query,prev_result_ref]))
+    print( "\t".join([read_name,chromosome,name,str(reads[read_name].count),reads[read_name].strand,prev_result_query,prev_result_ref,str(reads[read_name].prefix_start),str(reads[read_name].suffix_end)]))
