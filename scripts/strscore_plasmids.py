@@ -17,6 +17,8 @@ class ReadAlignment:
     bad_mapping = 0
     prefix_start = 0
     suffix_end = 0
+    prefix_length = 0
+    suffix_length = 0
 
 complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'} 
 
@@ -164,7 +166,9 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
     #if suffix_end_tmp:
     #    reads[alignment.qname].suffix_end = suffix_end_tmp[-1]
     (prefix_start_tmp, prefix_end_tmp) = get_alignment_points_prefix(alignment,begin, len(prefix))
+    reads[alignment.qname].prefix_length = prefix_end_tmp - prefix_start_tmp
     (suffix_start_tmp, suffix_end_tmp) = get_alignment_points_suffix(alignment, end, len(suffix))
+    reads[alignment.qname].suffix_length = suffix_end_tmp - suffix_start_tmp
     reads[alignment.qname].prefix_start = prefix_start_tmp
     reads[alignment.qname].suffix_end = suffix_end_tmp
  
@@ -210,7 +214,7 @@ for read_name , alignment in reads.items():
     #print("test1")
     prev_score = 0 
     c = 0
-    ideal_read = prefix_unit + ( repeat_unit * c ) + suffix_unit
+    ideal_read = prefix_unit[100 - reads[read_name].prefix_length :  ] + ( repeat_unit * c ) + suffix_unit[: reads[read_name].suffix_length - 1]
     #print("test4")
     #print(ideal_read)
     #print(repeat_region_with_flanks)
