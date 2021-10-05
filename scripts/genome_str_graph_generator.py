@@ -44,7 +44,7 @@ for chr in pysam.FastxFile(reference_file):
         #print("\t".join(["S", chr.name + "_prefix", chr.sequence[:int(begin)-1]]))
         #print("\t".join(["S", "repeat" , chr.sequence[int(begin):int(end)]]))
         #print("\t".join(["S", chr.name + "_suffix", chr.sequence[int(end)+1:]]))
-        links[chr.name] = "\t".join(["L", chr.name + "_before_prefix", "+", chr.name + "_prefix", prefix_orientation, "*" ]) + "\n" + "\t".join(["L", chr.name + "_prefix", prefix_orientation + "repeat" + repeat_orientation + "*"]) + "\n" + "\t".join(["L", "repeat" , repeat_orientation, "repeat" , repeat_orientation, "*"]) + "\n" + "\t".join(["L", "repeat" , repeat_orientation, chr.name + "_suffix", suffix_orientation, "*"]) + "\n" + "\t".join(["L", chr.name + "_suffix", suffix_orientation, chr.name + "_after_suffix", "+", "*"]) + "\n"
+        links[chr.name] = "\t".join(["L", chr.name + "_before_prefix", "+", chr.name + "_prefix", prefix_orientation, "*" ]) + "\n" + "\t".join(["L", chr.name + "_prefix", prefix_orientation , "repeat" , repeat_orientation , "*"]) + "\n" + "\t".join(["L", "repeat" , repeat_orientation, "repeat" , repeat_orientation, "*"]) + "\n" + "\t".join(["L", "repeat" , repeat_orientation, chr.name + "_suffix", suffix_orientation, "*"]) + "\n" + "\t".join(["L", chr.name + "_suffix", suffix_orientation, chr.name + "_after_suffix", "+", "*"]) + "\n"
     else:
         sides[chr.name] = "\t".join(["S", chr.name, chr.sequence]) 
 
