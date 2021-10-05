@@ -25,8 +25,11 @@ header = config_fh.readline()
 for line in config_fh:
     configs.append(line.rstrip().split()[0:7])
 
+configs_dict = dict()
+
 #In this case I am extracting only 1 config but in case we have more than 1, we can have a loop here to extract the other configs
-chromosome,begin,end,name,repeat,prefix,suffix = configs[0]
+for chromosome,begin,end,name,repeat,prefix,suffix in configs:
+    configs_dict[name] = [chromosome,begin,end,name,repeat,prefix,suffix]
 
 print("H\tVN:Z:a.0")
 
@@ -38,6 +41,9 @@ links = dict()
 c = 0
 
 for chr in pysam.FastxFile(reference_file):
+    for keys in configs_dict:
+        if(chr.name == configs_dict[keys][0]):
+            print("test")
     if(chr.name == chromosome):
         c = c + 1
         sides[chr.name] = "\t".join(["S", chr.name + "_before_prefix", chr.sequence[: int(begin)-(len(prefix)+1) ]]) + "\n" + "\t".join(["S", chr.name + "_prefix", chr.sequence[int(begin)-(len(prefix)+1) : int(begin)-1]]) + "\n" + "\t".join(["S", "repeat" , chr.sequence[int(begin):int(end)]]) + "\n" + "\t".join(["S", chr.name + "_suffix", chr.sequence[int(end)+1 : (int(end)+len(suffix)+1)]]) + "\n" + "\t".join(["S", chr.name + "_after_suffix", chr.sequence[int(end)+(len(suffix)+1) : ]]) + "\n"
