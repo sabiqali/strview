@@ -5,11 +5,17 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--ref', help='the ref file', required=True)
 parser.add_argument('--config', help='the config file', required=True)
+parser.add_argument('--repeat_orientation', help='the orientation of the repeat string. + or -', required=False, default="+")
+parser.add_argument('--prefix_orientation', help='the orientation of the prefix, + or -', required=False, default="+")
+parser.add_argument('--suffix_orientation', help='the orientation of the suffix, + or -', required=False, default="+")
 
 args = parser.parse_args()
 
 reference_file = args.ref
 config = args.config
+repeat_orientation = args.repeat_orientation
+prefix_orientation = args.prefix_orientation
+suffix_orientation = args.suffix_orientation
 
 # read in the configs and store them in the respective variables
 configs = list()
@@ -29,9 +35,24 @@ print("H\tVN:Z:a.0")
 sides = dict()
 links = dict()
 
+c = 0
+
 for chr in pysam.FastxFile(reference_file):
     if(chr.name == chromosome):
-        print("\t".join(["S", chr.name + "_prefix", chr.sequence[:int(begin)-1]]))
-	print("\t".join(["S", "repeat" , chr.sequence[int(begin):int(end)]]))
-	print("\t".join(["S", chr.name + "_suffix", chr.sequence[int(end)+1:]]))
-	#links 
+        c = c + 1
+        sides[chr.name] = "\t".join(["S", chr.name + "_before_prefix", chr.sequence[: int(begin)-(len(prefix)+1) ]]) + "\n" + "\t".join(["S", chr.name + "_prefix", chr.sequence[int(begin)-(len(prefix)+1) : int(begin)-1]]) + "\n" + "\t".join(["S", "repeat" , chr.sequence[int(begin):int(end)]]) + "\n" + "\t".join(["S", chr.name + "_suffix", chr.sequence[int(end)+1 : (int(end)+len(suffix)+1)]]) + "\n" + "\t".join(["S", chr.name + "_after_suffix", chr.sequence[int(end)+(len(suffix)+1) : ]]) + "\n"
+        #print("\t".join(["S", chr.name + "_prefix", chr.sequence[:int(begin)-1]]))
+        #print("\t".join(["S", "repeat" , chr.sequence[int(begin):int(end)]]))
+        #print("\t".join(["S", chr.name + "_suffix", chr.sequence[int(end)+1:]]))
+        links[chr.name] = "\t".join(["L", chr.name + "_before_prefix", "+", chr.name + "_prefix", prefix_orientation, "*" ]) + "\n" + "\t".join(["L", chr.name + "_prefix", prefix_orientation + "repeat" + repeat_orientation + "*"]) + "\n" + "\t".join(["L", "repeat" , repeat_orientation, "repeat" , repeat_orientation, "*"]) + "\n" + "\t".join(["L", "repeat" , repeat_orientation, chr.name + "_suffix", suffix_orientation, "*"]) + "\n" + "\t".join(["L", chr.name + "_suffix", suffix_orientation, chr.name + "_after_suffix", "+", "*"]) + "\n"
+    else:
+        sides[chr.name] = "\t".join(["S", chr.name, chr.sequence]) 
+
+for key in sides:
+    print(sides[key])
+
+for key in links:
+    print(links[key])       
+
+if(c==0):
+    print("Error : The chromosome of the config file was not found in the reference, please double check your inputs.")
