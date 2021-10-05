@@ -43,16 +43,14 @@ c = 0
 for chr in pysam.FastxFile(reference_file):
     for keys in configs_dict:
         if(chr.name == configs_dict[keys][0]):
-            print("test")
-    if(chr.name == chromosome):
-        c = c + 1
-        sides[chr.name] = "\t".join(["S", chr.name + "_before_prefix", chr.sequence[: int(begin)-(len(prefix)+1) ]]) + "\n" + "\t".join(["S", chr.name + "_prefix", chr.sequence[int(begin)-(len(prefix)+1) : int(begin)-1]]) + "\n" + "\t".join(["S", "repeat" , chr.sequence[int(begin):int(end)]]) + "\n" + "\t".join(["S", chr.name + "_suffix", chr.sequence[int(end)+1 : (int(end)+len(suffix)+1)]]) + "\n" + "\t".join(["S", chr.name + "_after_suffix", chr.sequence[int(end)+(len(suffix)+1) : ]]) + "\n"
-        #print("\t".join(["S", chr.name + "_prefix", chr.sequence[:int(begin)-1]]))
-        #print("\t".join(["S", "repeat" , chr.sequence[int(begin):int(end)]]))
-        #print("\t".join(["S", chr.name + "_suffix", chr.sequence[int(end)+1:]]))
-        links[chr.name] = "\t".join(["L", chr.name + "_before_prefix", "+", chr.name + "_prefix", prefix_orientation, "*" ]) + "\n" + "\t".join(["L", chr.name + "_prefix", prefix_orientation , "repeat" , repeat_orientation , "*"]) + "\n" + "\t".join(["L", "repeat" , repeat_orientation, "repeat" , repeat_orientation, "*"]) + "\n" + "\t".join(["L", "repeat" , repeat_orientation, chr.name + "_suffix", suffix_orientation, "*"]) + "\n" + "\t".join(["L", chr.name + "_suffix", suffix_orientation, chr.name + "_after_suffix", "+", "*"]) + "\n"
-    else:
-        sides[chr.name] = "\t".join(["S", chr.name, chr.sequence]) 
+            c = c + 1
+            sides[chr.name] = "\t".join(["S", chr.name + "_before_prefix", chr.sequence[: int(begin)-(len(prefix)+1) ]]) + "\n" + "\t".join(["S", chr.name + "_prefix", chr.sequence[int(begin)-(len(prefix)+1) : int(begin)-1]]) + "\n" + "\t".join(["S", "repeat" , chr.sequence[int(begin):int(end)]]) + "\n" + "\t".join(["S", chr.name + "_suffix", chr.sequence[int(end)+1 : (int(end)+len(suffix)+1)]]) + "\n" + "\t".join(["S", chr.name + "_after_suffix", chr.sequence[int(end)+(len(suffix)+1) : ]]) + "\n"
+            #print("\t".join(["S", chr.name + "_prefix", chr.sequence[:int(begin)-1]]))
+            #print("\t".join(["S", "repeat" , chr.sequence[int(begin):int(end)]]))
+            #print("\t".join(["S", chr.name + "_suffix", chr.sequence[int(end)+1:]]))
+            links[chr.name] = "\t".join(["L", chr.name + "_before_prefix", "+", chr.name + "_prefix", prefix_orientation, "*" ]) + "\n" + "\t".join(["L", chr.name + "_prefix", prefix_orientation , "repeat" , repeat_orientation , "*"]) + "\n" + "\t".join(["L", "repeat" , repeat_orientation, "repeat" , repeat_orientation, "*"]) + "\n" + "\t".join(["L", "repeat" , repeat_orientation, chr.name + "_suffix", suffix_orientation, "*"]) + "\n" + "\t".join(["L", chr.name + "_suffix", suffix_orientation, chr.name + "_after_suffix", "+", "*"]) + "\n"
+        else:
+            sides[chr.name] = "\t".join(["S", chr.name, chr.sequence]) 
 
 for key in sides:
     print(sides[key])
