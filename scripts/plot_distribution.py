@@ -3,6 +3,26 @@ import pandas as pd
 import argparse
 import seaborn as sns
 
+#def most_frequent(List):
+#    counter = 0
+#    num = List[0]
+#     
+#    for i in List:
+#        curr_frequency = List.count(i)
+#        if(curr_frequency> counter):
+#            counter = curr_frequency
+#            num = i
+# 
+#    return num
+
+
+import statistics
+from statistics import mode
+#from statistics import multimode
+ 
+def most_common(List):
+    return(mode(List))
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--input', help='the input file which was generated from strview', required=True)
 parser.add_argument('--name', help='the graph name', required=True)
@@ -17,13 +37,14 @@ output_file_name = name+".png"
 header = input_file.readline()
 outputs = list()
 for line in input_file:
-    outputs.append(line.rstrip().split()[0:7])
+    outputs.append(line.rstrip().split()[0:9])
 
 count_list=[]
 c = 0
 d = 0
 for line in outputs:
-    count_list.append(int(line[3]))
+    if(int(line[3]) <= 200):
+        count_list.append(int(line[3]))
 
 count_list.sort(reverse=True)
 #n, bins, patches = plt.hist(count_list)
@@ -35,4 +56,8 @@ plt.title('distribution')
 plt.savefig(output_file_name)
 
 print(count_list)
-print("%d %d"%(c,d))
+print("Mean %d"%(statistics.mean(count_list)))
+print("Median %d"%(statistics.median(count_list)))
+print("Mode %d"%(most_common(count_list)))
+#print("Mode %d"%(statistics.multimode(count_list)))
+print("SD %d"%(statistics.stdev(count_list)))

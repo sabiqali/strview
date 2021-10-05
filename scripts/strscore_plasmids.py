@@ -17,6 +17,8 @@ class ReadAlignment:
     bad_mapping = 0
     prefix_start = 0
     suffix_end = 0
+    prefix_length = 0
+    suffix_length = 0
 
 complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'} 
 
@@ -131,10 +133,16 @@ for line in config_fh:
 
 chromosome,begin,end,name,repeat,prefix,suffix = configs[0]
     
+for read in pysam.FastxFile(reference_file):
+    if(read.name == chromosome):
+        ref_seq = read.sequence
+
+max_repeats = 250
+
 #First pass through the alignment file to determine what are the matches.
 bamfile = pysam.AlignmentFile(in_bam)
-upper_limit = int(end) + 500 
-lower_limit = int(begin) - 500
+upper_limit = int(end) 
+lower_limit = int(begin)
 idx = 0
 scoring_matrix = parasail.matrix_create("ACGT", 5, -1)
 reads = dict()
@@ -145,9 +153,12 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
         #reads[alignment.qname].strand == '-' if alignment.is_reverse else '+'
     if reads[alignment.qname].strand != '' and reads[alignment.qname].strand != strand:
         reads[alignment.qname].bad_mapping = 1
+        #print("test")
     if alignment_contains_str_prefix( alignment , begin):
+        #print("test1")
         reads[alignment.qname].has_prefix_match = True
     if alignment_contains_str_suffix( alignment, end):
+        #print("test2")
         reads[alignment.qname].has_suffix_match = True
     #(prefix_start_tmp,suffix_end_tmp) = get_alignment_points(alignment,begin,end)  #This is the usual way, trying something new with the new function
     #if prefix_start_tmp:
@@ -155,7 +166,9 @@ for alignment in bamfile.fetch(chromosome,lower_limit,upper_limit):
     #if suffix_end_tmp:
     #    reads[alignment.qname].suffix_end = suffix_end_tmp[-1]
     (prefix_start_tmp, prefix_end_tmp) = get_alignment_points_prefix(alignment,begin, len(prefix))
+    reads[alignment.qname].prefix_length = prefix_end_tmp - prefix_start_tmp
     (suffix_start_tmp, suffix_end_tmp) = get_alignment_points_suffix(alignment, end, len(suffix))
+    reads[alignment.qname].suffix_length = suffix_end_tmp - suffix_start_tmp
     reads[alignment.qname].prefix_start = prefix_start_tmp
     reads[alignment.qname].suffix_end = suffix_end_tmp
  
@@ -164,6 +177,7 @@ print("\t".join(["read_name","chromosome","repeat_name","count","strand","aligne
 fh = pysam.FastaFile(reads_file)
 for read_name , alignment in reads.items():
     ideal_read = ""
+    #print("test2")
     if not reads[read_name].has_prefix_match or not reads[read_name].has_suffix_match:
         continue
     if reads[read_name].bad_mapping == 1:
@@ -173,10 +187,15 @@ for read_name , alignment in reads.items():
     #    suffix_unit = reverse_complement(prefix)
     #    prefix_unit = reverse_complement(suffix)
     #else:
+    #print("test")
     repeat_unit = repeat
     prefix_unit = prefix
     suffix_unit = suffix
     read_seq = fh.fetch(read_name)
+
+    max_length = len(ref_seq) + (max_repeats * len(repeat_unit))
+    if len(read_seq) > max_length:
+        continue
 
     prefix_start_tmp = reads[read_name].prefix_start
     suffix_end_tmp = reads[read_name].suffix_end
@@ -189,10 +208,21 @@ for read_name , alignment in reads.items():
     else:
         continue
 
+    if(not len(repeat_region_with_flanks)):
+        continue
+
+    #print("test1")
     prev_score = 0 
-    c = 3
-    ideal_read = prefix_unit + ( repeat_unit * c ) + suffix_unit
+    c = 0
+    ideal_read = prefix_unit[100 - reads[read_name].prefix_length :  ] + ( repeat_unit * c ) + suffix_unit[: reads[read_name].suffix_length - 1]
+    #print("test4")
+    #print(ideal_read)
+    #print(repeat_region_with_flanks)
+    #try:
     result = parasail.nw_trace_scan_32(repeat_region_with_flanks, ideal_read, 5, 4, scoring_matrix)
+    #except Exception:
+    #    continue
+    #print("test5")
     prev_result_ref = result.traceback.ref
     result_ref = result.traceback.ref
     result_comp = result.traceback.comp
@@ -200,6 +230,7 @@ for read_name , alignment in reads.items():
     result_query = result.traceback.query
     score = result.score
     prev_score = score
+    #print("test2")
     while (score >= prev_score):
         c = c + 1
         prev_score = score
@@ -213,6 +244,7 @@ for read_name , alignment in reads.items():
         result_query = result.traceback.query
     max_score = prev_score
     reads[read_name].count = c - 1
+    #print("test3")
     #if read_name == "2341b29f-7f5d-4496-8185-90bbe539251a" or read_name == "98b0e60a-0b39-4e44-9a8b-8fc78d53bc72":
     #    print(read_name)
     #    print(read_seq)
@@ -222,4 +254,4 @@ for read_name , alignment in reads.items():
     #    print(len(suffix))
     #    print(len(read_seq))
     
-    print( "\t".join([read_name,chromosome,name,str(reads[read_name].count),reads[read_name].strand,prev_result_query,prev_result_ref]))
+    print( "\t".join([read_name,chromosome,name,str(reads[read_name].count),reads[read_name].strand,prev_result_query,prev_result_ref,str(reads[read_name].prefix_start),str(reads[read_name].suffix_end)]))
