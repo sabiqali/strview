@@ -18,7 +18,7 @@ def load_graphaligner(filename):
     out = dict()
     with open(filename) as f:
         for row in f:
-            (read_id, count,path) = row.rstrip().split()
+            (read_id, count, strand, spanned) = row.rstrip().split()
             if read_id not in out:
                 out[read_id] = count
     return out
